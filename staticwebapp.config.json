@@ -1,13 +1,13 @@
 {
   "navigationFallback": { "rewrite": "/index.html" },
   "mimeTypes": { ".wasm": "application/wasm" },
-  "responseOverrides": [
+  "routes": [
     {
       "route": "/index.html",
       "headers": { "Cache-Control": "no-store" }
     },
     {
-      "extension": ".wasm",
+      "route": "/**/*.wasm",
       "headers": { "Cache-Control": "public, max-age=2592000, immutable" }
     }
   ]
