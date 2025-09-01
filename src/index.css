@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+html {
+  overflow-y: scroll;
+}
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #f3f4f6;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #baff53;
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #c2dfe3;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #222933;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  color: #e6f2f3;
+}
+
+.button2 {
+  background-color: #33333300;
+  border: 2px solid;
+  font-weight: bold;
+  border-radius: 12px;
+  border-color: #374151;
+  color: #374151;
+}
+
+button:hover {
+  background-color: #56667f;
+  color: #222933;
+}
+.button2:hover {
+  background-color: #374151;
+  color: #c2dfe3;
+  border-color: #374151;
+}
+
+/* --- Focus visible a desktop, amagat a mòbil (dispositius sense hover) --- */
+@media (hover: none) {
+  button:focus,
+  button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* opcional: elimina el flash blau en taps a iOS/Android */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+
+
+/* MIN (triangle apuntant amunt) 3F4C7B*/
+input[type="range"].thumb-min::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;   /* <- això evita el cercle blanc a mòbil */
+  border: none;              /* <- treu el contorn per defecte */
+  box-shadow: none;
+  outline: none;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 14px solid #2f3846;
+  margin-top: -12px;
+  cursor: pointer;  
+}
+
+input[type="range"].thumb-min::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 14px solid #2f3846;
+  margin-top: -3px;
+  cursor: pointer;
+}
+
+/* MAX (triangle apuntant avall) */
+input[type="range"].thumb-max::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;   /* <- això evita el cercle blanc a mòbil */
+  border: none;              /* <- treu el contorn per defecte */
+  box-shadow: none;
+  outline: none;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 14px solid #2f3846;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+input[type="range"].thumb-max::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 14px solid #2f3846;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
