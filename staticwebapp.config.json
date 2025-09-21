@@ -15,5 +15,11 @@
     ".map": "application/json",
     ".json":"application/json",
     ".wasm":"application/wasm"
-  }
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "rewrite": "https://rng-api.politebeach-dd86908c.northeurope.azurecontainerapps.io"
+    }
+  ]
 }
