@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { FaCogs } from 'react-icons/fa';
 import { generateRandomValues } from '../../utils/generateRNG';
 import SingleSlider from '../UI/SingleSlider';
@@ -27,6 +27,10 @@ export default function RNGConfigPanel({
   const [customSeed, setCustomSeed] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // 🔄 transició concurrent: manté "ocupat" mentre React pinta els gràfics
+  const [isPending, startTransition] = useTransition();
+  const busy = loading || isPending;
+
   // 👉 ref per cridar rangeRef.current.setRange(a,b)
   const rangeRef = useRef(null);
 
@@ -37,9 +41,6 @@ export default function RNGConfigPanel({
   const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
   // ✅ En canviar de mode:
-  //    - mou el thumb esquerre a 0
-  //    - clampa max i quantity al límit del mode
-  //    - actualitza l'estat del pare
   useEffect(() => {
     const limits = isArtMode ? DEFAULTS.art.range : DEFAULTS.performance.range;
 
@@ -66,9 +67,13 @@ export default function RNGConfigPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualMode]);
 
+  // cedir un frame
+  const raf = () => new Promise(requestAnimationFrame);
+
   const generateValues = async () => {
     try {
-      setLoading(true);
+      setLoading(true);      // 1) marcar com a "loading"
+      await raf();           // 2) cedir un frame → es pinta "Generating…"
 
       const seed =
         seedType === 'random'
@@ -84,19 +89,22 @@ export default function RNGConfigPanel({
         isArtMode
       );
 
-      setGeneratedValues({
-        native: selected,
-        all: { rng1, rng2, rng3 },
-        selectedKey: 'RNG1',
-        seed,
-        range: { min, max },
-        quantity,
-        mode: visualMode,
+      // 3) el re-render pesat dels gràfics dins d'una transició
+      startTransition(() => {
+        setGeneratedValues({
+          native: selected,
+          all: { rng1, rng2, rng3 },
+          selectedKey: 'RNG1',
+          seed,
+          range: { min, max },
+          quantity,
+          mode: visualMode,
+        });
       });
     } catch (e) {
-      console.error('RNG error:', e);
+      console.error(e);
     } finally {
-      setLoading(false);
+      setLoading(false);     // 4) "busy" seguirà true mentre isPending sigui true
     }
   };
 
@@ -114,13 +122,12 @@ export default function RNGConfigPanel({
       <div className="mb-4 ml-0 md:ml-5">
         <label className="block font-bold text-sm text-gray-800 mb-8">Value Range</label>
         <DualSlider
-          ref={rangeRef}                                    
+          ref={rangeRef}
           minLimit={rangeLimits.min}
           maxLimit={rangeLimits.max}
-          minValue={clamp(min, rangeLimits.min, rangeLimits.max)}  // controlat
-          maxValue={clamp(max, rangeLimits.min, rangeLimits.max)}  // controlat
+          minValue={clamp(min, rangeLimits.min, rangeLimits.max)}
+          maxValue={clamp(max, rangeLimits.min, rangeLimits.max)}
           onChange={(newMin, newMax) => {
-            // clamp sempre dins dels límits actuals
             const cMin = clamp(Math.min(newMin, newMax), rangeLimits.min, rangeLimits.max);
             const cMax = clamp(Math.max(newMin, newMax), rangeLimits.min, rangeLimits.max);
             setMin(cMin);
@@ -195,7 +202,7 @@ export default function RNGConfigPanel({
               onChange={(e) => setCustomSeed(e.target.value)}
               disabled={seedType !== 'fixed'}
               title={seedType === 'fixed' ? 'Editable (Fixed seed)' : 'Switch to Fixed to edit'}
-              className={`px-2 py-1 text-sm h-8 rounded border w/full md:w-40 mr-8 focus:outline-none
+              className={`px-2 py-1 text-sm h-8 rounded border w-full md:w-40 mr-8 focus:outline-none
                 ${seedType === 'fixed'
                   ? 'bg-white text-gray-800 border-gray-600 focus:ring focus:ring-blue-300'
                   : 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed'
@@ -208,12 +215,14 @@ export default function RNGConfigPanel({
       {/* Controls */}
       <div className="mt-10 flex items-center justify-center gap-6">
         <button
-          className="button w-40 translate-y-2"
+          className={`button w-40 translate-y-2 ${busy ? 'opacity-90 cursor-not-allowed' : ''}`}
           onClick={generateValues}
-          disabled={loading || min > max}
-          title={loading ? 'Generating…' : (min > max ? 'Invalid range' : 'Execute Roll')}
+          disabled={busy || min > max}
+          aria-busy={busy}
+          aria-live="polite"
+          title={busy ? 'Generating…' : (min > max ? 'Invalid range' : 'Execute Roll')}
         >
-          {loading ? 'Generating…' : 'Execute Roll'}
+          {busy ? 'Generating…' : 'Execute Roll'}
         </button>
       </div>
     </div>
