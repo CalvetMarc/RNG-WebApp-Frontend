@@ -10,9 +10,10 @@ export default function ExperimentalVisuals({ valuesFreeRNG = [] }) {
       {/* Títol Experimental Visuals amb fons en forma de càpsula */}
       <div className="flex justify-center">
         <div className="bg-[#6abc9e]/70 px-6 py-2 rounded-full shadow-sm border border-[#B6BCC8] mt-20">
-          <h2 className="text-3xl font-semibold text-gray-800">
-            🎨 Experimental Visuals
-          </h2>
+        <h2 className="font-semibold text-gray-800 text-center"
+            style={{ fontSize: "clamp(18px, 3vw, 28px)" }}>
+          🎨 Experimental Visuals
+        </h2>
         </div>
       </div>
 

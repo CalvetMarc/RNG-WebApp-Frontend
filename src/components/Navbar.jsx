@@ -54,7 +54,7 @@ export default function Navbar() {
             className="font-bold text-xl text-white no-underline cursor-pointer hover:!text-white focus:!text-white active:!text-white visited:!text-white"
             onClick={() => setMenuOpen(false)}
           >
-            Free RNG
+            Free PRNG
           </a>
           <button onClick={() => setMenuOpen(!menuOpen)} className="focus:outline-none z-20">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,32 +73,42 @@ export default function Navbar() {
             <div className="flex flex-col items-center justify-center gap-6 py-8">
               <a href="/" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Home</a>
               <a href="/dashboard" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Dashboard</a>
-              {/*Back to 'a' when implement docapi */}
-             <Tooltip text="Coming soon" from="left">
-  <button
-    type="button"
-    aria-disabled="true"
-    onClick={(e) => e.preventDefault()}
-    onTouchEnd={(e) => e.currentTarget.blur()}
-    onMouseUp={(e) => e.currentTarget.blur()}
-    className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 text-blue-400 border border-blue-400 hover:text-blue-300 hover:border-blue-300 bg-transparent"
-  >
-    Sign Up
-  </button>
-</Tooltip>
+              <Tooltip text="Coming soon" from="left">
+                <a
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="hover:text-blue-400"
+                  aria-disabled="true"
+                >
+                  DocAPI
+                </a>
+              </Tooltip>
 
-<Tooltip text="Coming soon" from="left">
-  <button
-    type="button"
-    aria-disabled="true"
-    onClick={(e) => e.preventDefault()}
-    onTouchEnd={(e) => e.currentTarget.blur()}
-    onMouseUp={(e) => e.currentTarget.blur()}
-    className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 bg-blue-600 text-white hover:bg-blue-500"
-  >
-    Log In
-  </button>
-</Tooltip>
+             <Tooltip text="Coming soon" from="left">
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  onClick={(e) => e.preventDefault()}
+                  onTouchEnd={(e) => e.currentTarget.blur()}
+                  onMouseUp={(e) => e.currentTarget.blur()}
+                  className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 text-blue-400 border border-blue-400 hover:text-blue-300 hover:border-blue-300 bg-transparent"
+                >
+                  Sign Up
+                </button>
+              </Tooltip>
+
+              <Tooltip text="Coming soon" from="left">
+                <button
+                  type="button"
+                  aria-disabled="true"
+                  onClick={(e) => e.preventDefault()}
+                  onTouchEnd={(e) => e.currentTarget.blur()}
+                  onMouseUp={(e) => e.currentTarget.blur()}
+                  className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 bg-blue-600 text-white hover:bg-blue-500"
+                >
+                  Log In
+                </button>
+              </Tooltip>
 
 
 

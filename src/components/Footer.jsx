@@ -5,40 +5,28 @@ export default function Footer() {
   return (
     <footer className="bg-gray-700 text-white py-6">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-center text-sm w-full gap-6 md:gap-0 relative">
-        {/* Text centrat a dalt en mòbil */}
+        {/* Text centrat */}
         <div className="md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 text-sm text-center">
           <p>&copy; {new Date().getFullYear()} Free PRNG. All rights reserved.</p>
         </div>
 
-        {/* Bloc Esquerra */}
-        <div className="flex gap-4 md:pl-10 justify-center md:justify-start">
+        {/* Bloc Esquerra: fila >=1000px, columna <1000px */}
+        <div className="flex gap-4 md:pl-10 justify-center md:justify-start
+                        max-[1000px]:flex-col max-[1000px]:items-center max-[1000px]:gap-2">
           <Link to="/privacy-policy" className="hover:text-blue-400">Privacy Policy</Link>
           <Link to="/terms" className="hover:text-blue-400">Terms of Service</Link>
           <Link to="/contact" className="hover:text-blue-400">Contact</Link>
         </div>
 
-        {/* Bloc Dreta */}
+        {/* Bloc Dreta (sense canvis) */}
         <div className="flex gap-6 md:pr-10 justify-center md:justify-end">
-          <a
-            href="https://www.linkedin.com/in/marc-calvet-palao/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-blue-400"
-          >
+          <a href="https://www.linkedin.com/in/marc-calvet-palao/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaLinkedin />
           </a>
-          <a
-            href="mailto:marc200102@gmail.com"
-            className="hover:text-blue-400"
-          >
+          <a href="mailto:marc200102@gmail.com" className="hover:text-blue-400">
             <FaEnvelope />
           </a>
-          <a
-            href="https://github.com/CalvetMarc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-blue-400"
-          >
+          <a href="https://github.com/CalvetMarc" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaGithub />
           </a>
         </div>

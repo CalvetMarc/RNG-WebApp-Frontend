@@ -12,8 +12,12 @@ function App() {
   return (
     <>
       {DEBUG && (
-        <div className="fixed inset-0 pointer-events-none z-50">
+        <div className="fixed inset-0 pointer-events-none z-10000">
           {/* línies de debug */}
+          {/* línia vertical */}
+          <div className="absolute top-0 bottom-0 left-1/2 w-px bg-red-500"></div>
+          {/* línia horitzontal */}
+          <div className="absolute left-0 right-0 top-1/2 h-px bg-red-500"></div>
         </div>
       )}
 
