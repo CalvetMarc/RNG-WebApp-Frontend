@@ -3,14 +3,22 @@ import * as Tone from 'tone';
 import SingleSlider from '../../../UI/SingleSlider';
 import MelodyPartitura from './MelodyPartitura';
 
+// 🆕 Detecta iOS (incloent iPadOS amb "MacIntel")
+function isIOS() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  return /iPad|iPhone|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 export default function Melody({ valuesFreeRNG = [] }) {
   const [evenDuration, setEvenDuration] = useState('8n');
   const [oddDuration, setOddDuration] = useState('4n');
   const [volume, setVolume] = useState(0);
   const [instrumentType, setInstrumentType] = useState('synth');
   const [staffEvents, setStaffEvents] = useState([]);
-const [loopEndTime, setLoopEndTime] = useState(0);
+  const [loopEndTime, setLoopEndTime] = useState(0);
 
+  // 🆕 Banner d’ajuda per a iOS (visible d’entrada només en iOS)
+  const [showIOSSilentHint, setShowIOSSilentHint] = useState(isIOS());
 
   const evenRef = useRef(evenDuration);
   const oddRef = useRef(oddDuration);
@@ -18,13 +26,8 @@ const [loopEndTime, setLoopEndTime] = useState(0);
   const partRef = useRef(null);
   const volumeRef = useRef(null);
 
-  useEffect(() => {
-    evenRef.current = evenDuration;
-  }, [evenDuration]);
-
-  useEffect(() => {
-    oddRef.current = oddDuration;
-  }, [oddDuration]);
+  useEffect(() => { evenRef.current = evenDuration; }, [evenDuration]);
+  useEffect(() => { oddRef.current = oddDuration; }, [oddDuration]);
 
   useEffect(() => {
     Tone.start();
@@ -88,78 +91,92 @@ const [loopEndTime, setLoopEndTime] = useState(0);
   };
 
   const generateEvents = async () => {
-  // ✳️ Fase 1: Desactiva la partitura
-  setStaffEvents([]);
-  setLoopEndTime(0);
-  await new Promise((res) => setTimeout(res, 100)); // 🔁 Dona temps al missatge per aparèixer
+    setStaffEvents([]);
+    setLoopEndTime(0);
+    await new Promise((res) => setTimeout(res, 100));
 
-  const scale = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'];
-  let currentTime = 0;
+    const scale = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'];
+    let currentTime = 0;
 
-  const events = valuesFreeRNG.map((val) => {
-    const isEven = val % 2 === 0;
-    const duration = Tone.Time(isEven ? evenRef.current : oddRef.current).toSeconds();
-    const note = scale[val % scale.length];
-    const time = currentTime;
-    currentTime += duration;
-    return [time, { note, duration, original: val }];
+    const events = valuesFreeRNG.map((val) => {
+      const isEven = val % 2 === 0;
+      const duration = Tone.Time(isEven ? evenRef.current : oddRef.current).toSeconds();
+      const note = scale[val % scale.length];
+      const time = currentTime;
+      currentTime += duration;
+      return [time, { note, duration, original: val }];
+    });
 
-  });
-
-  // ✳️ Fase 2: Ara sí, activa la partitura
-  setStaffEvents(events);
-  setLoopEndTime(currentTime);
-
-  return { events, loopEnd: currentTime };
-};
-
+    setStaffEvents(events);
+    setLoopEndTime(currentTime);
+    return { events, loopEnd: currentTime };
+  };
 
   const generateAndStartPart = async () => {
-  const { events, loopEnd } = await generateEvents();
+    const { events, loopEnd } = await generateEvents();
 
-  const part = new Tone.Part((time, value) => {
-    if (synthRef.current) {
-      synthRef.current.triggerAttackRelease(value.note, value.duration, time);
-    }
-  }, events);
+    const part = new Tone.Part((time, value) => {
+      if (synthRef.current) {
+        synthRef.current.triggerAttackRelease(value.note, value.duration, time);
+      }
+    }, events);
 
-  part.loop = true;
-  part.loopEnd = `${loopEnd}`;
-  part.start(0);
-  partRef.current = part;
-};
-
+    part.loop = true;
+    part.loopEnd = `${loopEnd}`;
+    part.start(0);
+    partRef.current = part;
+  };
 
   const updatePart = async () => {
-  const { events, loopEnd } = await generateEvents();
+    const { events, loopEnd } = await generateEvents();
 
-  const newPart = new Tone.Part((time, value) => {
-    if (synthRef.current) {
-      synthRef.current.triggerAttackRelease(value.note, value.duration, time);
-    }
-  }, events);
+    const newPart = new Tone.Part((time, value) => {
+      if (synthRef.current) {
+        synthRef.current.triggerAttackRelease(value.note, value.duration, time);
+      }
+    }, events);
 
-  newPart.loop = true;
-  newPart.loopEnd = `${loopEnd}`;
-  newPart.start(0);
+    newPart.loop = true;
+    newPart.loopEnd = `${loopEnd}`;
+    newPart.start(0);
 
-  partRef.current?.dispose();
-  partRef.current = newPart;
-};
-
+    partRef.current?.dispose();
+    partRef.current = newPart;
+  };
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
+      {/* 🆕 Banner només en iOS per avisar del mode silenci */}
+      {showIOSSilentHint && (
+        <div
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white text-gray-900 shadow-lg rounded-xl px-4 py-3 text-sm w-[min(90vw,28rem)]"
+          role="alert"
+          aria-live="polite"
+        >
+          <p className="text-center">
+            🔇 To hear the melody, turn <b>OFF</b> the iPhone/iPad side <b>Silent</b> switch and increase the physical volume.
+          </p>
+          <button
+            className="mt-3 mx-auto block rounded px-3 py-1 bg-gray-100 hover:bg-gray-200"
+            onClick={() => setShowIOSSilentHint(false)}
+            aria-label="Close iOS notice"
+          >
+            OK
+          </button>
+        </div>
+      )}
+
+
       <div className="flex flex-col sm:flex-row gap-6 justify-center items-center md:items-start mb-6 px-6">
         {/* 🎚️ Slider de Volum */}
-       <div className="bg-[#b0cad2] px-8 py-3 rounded-lg shadow min-w-[270px]">
-        <div className="flex items-center gap-4 translate-x-2.5">
-          <label className="text-sm text-gray-800  mt-5.5 font-semibold whitespace-nowrap">Volume</label>
-          <div className="flex-1 ">
-            <SingleSlider min={0} max={10} value={volume} onChange={setVolume} barSizePercentage={80} />
+        <div className="bg-[#b0cad2] px-8 py-3 rounded-lg shadow min-w-[270px]">
+          <div className="flex items-center gap-4 translate-x-2.5">
+            <label className="text-sm text-gray-800  mt-5.5 font-semibold whitespace-nowrap">Volume</label>
+            <div className="flex-1 ">
+              <SingleSlider min={0} max={10} value={volume} onChange={setVolume} barSizePercentage={80} />
+            </div>
           </div>
         </div>
-      </div>
 
         {/* 🕒 Durations */}
         <div className="bg-[#b0cad2] px-6 py-4 rounded-lg shadow flex flex-wrap gap-6 items-center">
@@ -192,52 +209,50 @@ const [loopEndTime, setLoopEndTime] = useState(0);
         </div>
 
         {/* 🎛️ Instruments */}
-<div className="flex gap-6 bg-[#b0cad2] px-6 py-5.5 rounded-lg shadow min-w-[270px] justify-center">
-  <label className="flex items-center gap-2 text-sm text-gray-800">
-    <input
-      type="radio"
-      name="melody-instrument"
-      value="synth"
-      checked={instrumentType === 'synth'}
-      onChange={() => setInstrumentType('synth')}
-      className="appearance-none w-3 h-3 rounded-full
+        <div className="flex gap-6 bg-[#b0cad2] px-6 py-5.5 rounded-lg shadow min-w-[270px] justify-center">
+          <label className="flex items-center gap-2 text-sm text-gray-800">
+            <input
+              type="radio"
+              name="melody-instrument"
+              value="synth"
+              checked={instrumentType === 'synth'}
+              onChange={() => setInstrumentType('synth')}
+              className="appearance-none w-3 h-3 rounded-full
                  ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
                  bg-[#94a3b8] checked:bg-gray-600"
-    />
-    Default Synth
-  </label>
-  <label className="flex items-center gap-2 text-sm text-gray-800">
-    <input
-      type="radio"
-      name="melody-instrument"
-      value="futuristic"
-      checked={instrumentType === 'futuristic'}
-      onChange={() => setInstrumentType('futuristic')}
-      className="appearance-none w-3 h-3 rounded-full
+            />
+            Default Synth
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-800">
+            <input
+              type="radio"
+              name="melody-instrument"
+              value="futuristic"
+              checked={instrumentType === 'futuristic'}
+              onChange={() => setInstrumentType('futuristic')}
+              className="appearance-none w-3 h-3 rounded-full
                  ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
                  bg-[#94a3b8] checked:bg-gray-600"
-    />
-    Futuristic
-  </label>
-  <label className="flex items-center gap-2 text-sm text-gray-800">
-    <input
-      type="radio"
-      name="melody-instrument"
-      value="electric"
-      checked={instrumentType === 'electric'}
-      onChange={() => setInstrumentType('electric')}
-      className="appearance-none w-3 h-3 rounded-full
+            />
+            Futuristic
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-800">
+            <input
+              type="radio"
+              name="melody-instrument"
+              value="electric"
+              checked={instrumentType === 'electric'}
+              onChange={() => setInstrumentType('electric')}
+              className="appearance-none w-3 h-3 rounded-full
                  ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
                  bg-[#94a3b8] checked:bg-gray-600"
-    />
-    Electric
-  </label>
-</div>
-
+            />
+            Electric
+          </label>
+        </div>
       </div>
-            {/* <-- aquest tanca els selectors */}
-      <MelodyPartitura events={staffEvents} loopEnd={loopEndTime} />
 
+      <MelodyPartitura events={staffEvents} loopEnd={loopEndTime} />
     </div>
   );
 }
