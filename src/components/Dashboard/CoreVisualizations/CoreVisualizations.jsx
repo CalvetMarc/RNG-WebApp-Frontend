@@ -12,7 +12,8 @@ export default function CoreVisualizations({ valuesFreeRNG = [] }) {
       {/* Títol Core Visualizations amb fons en forma de càpsula */}
       <div className="mt-20 flex justify-center">
         <div className="bg-[#3e7d86]/80 px-6 py-2 rounded-full shadow-sm border border-gray-400">
-          <h2 className="text-3xl font-semibold text-gray-800">
+          <h2 className="font-semibold text-gray-800" 
+            style={{ fontSize: "clamp(18px, 3vw, 28px)" }}>
             🧪 Core Visualizations
           </h2>
         </div>
