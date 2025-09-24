@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Tooltip from './Tooltip';
+import { FaLinkedin, FaEnvelope, FaGithub, FaFileArchive } from 'react-icons/fa';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,32 +18,29 @@ export default function Navbar() {
         {/* Links centrats (desktop) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 gap-6 hidden md:flex">
           <a href="/" className="hover:text-blue-400">Home</a>
-          <a href="/dashboard" className="hover:text-blue-400">Dashboard</a>
-          <Tooltip text="Coming soon" from="down">
-            <a href="" className="hover:text-blue-400">DocAPI</a>
-          </Tooltip>
+          <a href="/visualizer" className="hover:text-blue-400">Visualizer</a>
+          <a href="/generator" className="hover:text-blue-400">Generator</a>
         </div>
 
         {/* Botons (desktop) */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block">
-          <div className="flex gap-4 justify-end">
-            <Tooltip text="Coming soon" from="down">
-              <button
-                disabled
-                className="bg-transparent border border-white px-4 py-1 rounded cursor-not-allowed w-25"
-              >
-                Sign Up
-              </button>
-            </Tooltip>
+          <div className="flex gap-8 justify-end items-center">
+            <a
+              href="https://github.com/CalvetMarc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-400 text-3xl"
+            >
+              <FaGithub />
+            </a>
 
-            <Tooltip text="Coming soon" from="down">
-              <button
-                disabled
-                className="bg-blue-600 px-4 py-1 rounded cursor-not-allowed w-25"
-              >
-                Log In
-              </button>
-            </Tooltip>
+            {/* Icòna DownloadZip amb efecte hover */}
+            <a
+              href="/download/freeprng.zip" // ← canvia-ho a la URL real del teu .zip
+              className="hover:text-blue-400 text-3xl"
+            >
+              <FaFileArchive />
+            </a>
           </div>
         </div>
 
@@ -72,46 +69,26 @@ export default function Navbar() {
           <div className="md:hidden fixed top-15 left-0 right-0 w-screen z-50 bg-gray-600 shadow-md">
             <div className="flex flex-col items-center justify-center gap-6 py-8">
               <a href="/" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Home</a>
-              <a href="/dashboard" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Dashboard</a>
-              <Tooltip text="Coming soon" from="left">
-                <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  className="hover:text-blue-400"
-                  aria-disabled="true"
-                >
-                  DocAPI
-                </a>
-              </Tooltip>
+              <a href="/visualizer" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Visualizer</a>
+              <a href="/generator" className="text-blue-400 text-lg hover:text-blue-300" onClick={() => setMenuOpen(false)}>Generator</a>
 
-             <Tooltip text="Coming soon" from="left">
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  onClick={(e) => e.preventDefault()}
-                  onTouchEnd={(e) => e.currentTarget.blur()}
-                  onMouseUp={(e) => e.currentTarget.blur()}
-                  className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 text-blue-400 border border-blue-400 hover:text-blue-300 hover:border-blue-300 bg-transparent"
-                >
-                  Sign Up
-                </button>
-              </Tooltip>
+              {/* Icòna DownloadZip també al menú mòbil */}
+              <a
+              href="https://github.com/CalvetMarc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-400 text-3xl"
+              >
+                <FaGithub />
+              </a>
 
-              <Tooltip text="Coming soon" from="left">
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  onClick={(e) => e.preventDefault()}
-                  onTouchEnd={(e) => e.currentTarget.blur()}
-                  onMouseUp={(e) => e.currentTarget.blur()}
-                  className="w-40 h-12 inline-flex items-center justify-center rounded cursor-not-allowed select-none focus:outline-none focus:ring-0 bg-blue-600 text-white hover:bg-blue-500"
-                >
-                  Log In
-                </button>
-              </Tooltip>
-
-
-
+              {/* Icòna DownloadZip amb efecte hover */}
+              <a
+                href="/download/freeprng.zip" // ← canvia-ho a la URL real del teu .zip
+                className="hover:text-blue-400 text-3xl"
+              >
+                <FaFileArchive />
+              </a>
             </div>
           </div>
         )}

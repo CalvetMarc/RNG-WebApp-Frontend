@@ -25,8 +25,8 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/docapi" element={<DocApi />} />
+        <Route path="/visualizer" element={<Dashboard />} />
+        <Route path="/generator" element={<DocApi />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />
