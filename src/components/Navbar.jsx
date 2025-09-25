@@ -16,17 +16,42 @@ export default function Navbar() {
         </a>
 
         {/* Links centrats (desktop) */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 gap-6 hidden md:flex">
-          <a href="/" className="hover:text-blue-400">Home</a>
-          <a href="/visualizer" className="hover:text-blue-400">Visualizer</a>
-          <a href="/generator" className="hover:text-blue-400">Generator</a>
+        <div className="hidden md:block absolute inset-0">
+          <div className="relative h-full">
+            {/* ajusta aquest GAP a la distància centre↔enllaç (en px) */}
+            {/** 120px és un bon punt de partida */}
+            <a
+              href="/"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 hover:text-blue-400"
+              style={{ left: 'calc(50% - 120px)' }}
+            >
+              Home
+            </a>
+
+            <a
+              href="/visualizer"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 hover:text-blue-400"
+              style={{ left: '50%' }}
+            >
+              Visualizer
+            </a>
+
+            <a
+              href="/generator"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 hover:text-blue-400"
+              style={{ left: 'calc(50% + 120px)' }}
+            >
+              Generator
+            </a>
+          </div>
         </div>
+
 
         {/* Botons (desktop) */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block">
           <div className="flex gap-8 justify-end items-center">
             <a
-              href="https://github.com/CalvetMarc"
+              href="https://github.com/CalvetMarc/pcg32-prng"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-400 text-3xl"
@@ -74,7 +99,7 @@ export default function Navbar() {
 
               {/* Icòna DownloadZip també al menú mòbil */}
               <a
-              href="https://github.com/CalvetMarc"
+              href="https://github.com/CalvetMarc/pcg32-prng"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-400 text-3xl"

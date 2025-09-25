@@ -45,25 +45,18 @@ export default function Hero() {
 
           <div className="flex flex-col sm:flex-row items-center md:items-start justify-center md:justify-start gap-4 mt-10 md:mt-6">
             <Link
-              to="/dashboard"
+              to="https://github.com/CalvetMarc/pcg32-prng"
               className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation"
             >
               View Source
             </Link>
 
-            {isTouch ? (
-              <Tooltip text="Coming soon" from="down">
-                <Link to="" className="inline-block" onClick={(e) => e.preventDefault()}>
-                  <button className="button2 w-40">View API Docs</button>
-                </Link>
-              </Tooltip>
-            ) : (
-              <Tooltip text="Coming soon" from="down">
-                <button disabled className="button2 w-40 cursor-not-allowed">
-                  Quick Generation
-                </button>
-              </Tooltip>
-            )}
+            <Link
+              to="/generator"
+              className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation"
+            >
+              Quick Generation
+            </Link>
           </div>
         </div>
       </div>
