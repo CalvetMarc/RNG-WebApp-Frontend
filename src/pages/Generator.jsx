@@ -3,6 +3,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import GoldCoinFlip from '../components/Generator/GoldCoinFlip';
 import RedDice from '../components/Generator/RedDice';
+import CoinSpriteFlipSheet from '../components/Generator/CoinSpriteFlipSheet';
+import coinSheet from '../assets/coin_sheet.png'; // ✅ sense dos punts
 
 export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
@@ -22,13 +24,16 @@ export default function Generator() {
               <p className="text-center text-gray-500">Click the coin to flip.</p>
 
               {/* Zona central que creix per empènyer el "Result" avall */}
-              <div className="mt-6 flex items-center justify-center flex-1">
-                <GoldCoinFlip
-                  size={200}
+              <div className="mt-6 flex items-center justify-center flex-1">              
+
+                <CoinSpriteFlipSheet
+                  sheetSrc={coinSheet}
+                  size={150}
                   msPerFrame={50}
-                  cycles={1}
-                  result="random"
-                  onEnd={(r) => setLastCoinResult(r)}
+                  cycles={2}
+                  headIndex={0}  // frame 1 (cara) → index 0
+                  tailIndex={9}  // frame 10 (creu) → index 9
+                  onEnd={(side) => setLastCoinResult(side)}
                 />
               </div>
 
