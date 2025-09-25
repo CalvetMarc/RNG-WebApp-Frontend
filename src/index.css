@@ -154,3 +154,6 @@ input[type="range"].thumb-max::-moz-range-thumb {
     background-color: #f9f9f9;
   }
 }
+
+/* Dona més pes a la classe de Tailwind */
+a.underline { text-decoration: underline !important; }

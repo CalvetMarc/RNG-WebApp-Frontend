@@ -37,27 +37,22 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-grow">
-        <div className="mt-26 mx-auto w-fit">
-          <ModeSwitch mode={mode} setMode={setMode} />
-        </div>
-
-        {mode === 'explore' && (
-          <>
-            <div className="mt-10 w-full bg-[#919CAC] py-6 ">
-              <div className="max-w-screen-xl mx-auto mb-8">
-                <RNGConfigPanel
-                  setGeneratedValues={setGeneratedValues}
-                  visualMode={visualMode}
-                  setVisualMode={setVisualMode}
-                  selectedRngKey={selectedRngKey}
-                  setSelectedRngKey={setSelectedRngKey}
-                />
+      <main className="flex-grow">        
+            <div className="mt-25">
+              <div className="mt-10 w-full bg-[#919CAC] py-6">
+                <div className="max-w-screen-xl mx-auto mb-8">
+                  <RNGConfigPanel
+                    setGeneratedValues={setGeneratedValues}
+                    visualMode={visualMode}
+                    setVisualMode={setVisualMode}
+                    selectedRngKey={selectedRngKey}
+                    setSelectedRngKey={setSelectedRngKey}
+                  />
+                </div>
               </div>
             </div>
-
             {visualMode === 'performance' && (
-              <div className="pb-15">
+              <div className="md:pb-0 pb-0">
                 {/* Mantinc la prop antiga per compat: */}
                 <CoreVisualizations
                   valuesFreeRNG={valuesToShow}
@@ -67,15 +62,14 @@ export default function Dashboard() {
             )}
 
             {visualMode === 'art' && (
-              <div className="pb-15">
+              <div className="pb-0">
                 <ExperimentalVisuals
                   valuesFreeRNG={valuesToShow}
                   valuesToShow={valuesToShow}
                 />
               </div>
             )}
-          </>
-        )}
+         
       </main>
 
       <Footer />

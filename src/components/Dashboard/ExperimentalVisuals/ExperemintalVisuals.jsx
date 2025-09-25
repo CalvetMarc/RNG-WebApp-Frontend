@@ -9,7 +9,7 @@ export default function ExperimentalVisuals({ valuesFreeRNG = [] }) {
     <>
       {/* Títol Experimental Visuals amb fons en forma de càpsula */}
       <div className="flex justify-center">
-        <div className="bg-[#6abc9e]/70 px-6 py-2 rounded-full shadow-sm border border-[#B6BCC8] mt-20">
+        <div className="bg-[#6abc9e]/70 px-6 py-2 rounded-full shadow-sm border border-[#B6BCC8] mt-15">
         <h2 className="font-semibold text-gray-800 text-center"
             style={{ fontSize: "clamp(18px, 3vw, 28px)" }}>
           🎨 Experimental Visuals
@@ -24,7 +24,7 @@ export default function ExperimentalVisuals({ valuesFreeRNG = [] }) {
             <Melody valuesFreeRNG={valuesFreeRNG} />
           </div>
           {/* Grid visuals */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-90 mt-90 md:mt-90 mb-0 px-4 items-end mb-15">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-90 mt-90 md:mt-90 px-4 items-end mb-15">
             <div className="h-[350px] flex items-end mt-20 md:mt-10">
               <BETRManager valuesFreeRNG={valuesFreeRNG} />
             </div>
@@ -34,7 +34,7 @@ export default function ExperimentalVisuals({ valuesFreeRNG = [] }) {
           </div>          
         </>
       ) : (
-        <div className="text-center text-gray-500 mt-10 text-base">
+        <div className="text-center text-gray-500 mt-10 text-base mb-5">
           No data available. Generate a new sequence to see the visualizations.
         </div>
       )}
