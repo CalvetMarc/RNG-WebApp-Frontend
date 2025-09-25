@@ -48,17 +48,40 @@ export default function CoinSpriteFlipSheet({
 
     const side = await pickSide();
     const endIndex = side === "heads" ? headIndex : tailIndex;
-    const totalSteps = Math.max(1, cycles) * meta.frames;
+
+    // fem girar 'cycles' voltes senceres…
+    const baseSteps = Math.max(1, cycles) * meta.frames;
 
     let step = 0;
+    let current = frame; // 👈 portem un comptador local per saber on som exactament
+
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setFrame((f) => (f + 1) % meta.frames);
-      if (++step >= totalSteps) {
+      current = (current + 1) % meta.frames;
+      setFrame(current);
+
+      if (++step >= baseSteps) {
         clearInterval(timerRef.current);
-        setFrame(Math.min(endIndex, meta.frames - 1));
-        playingRef.current = false;
-        onEnd && onEnd(side);
+
+        // …i ara **alineem** fins al frame final sense saltar
+        const extra = (endIndex - current + meta.frames) % meta.frames; // 0..frames-1
+        if (extra === 0) {
+          // ja hi som
+          playingRef.current = false;
+          onEnd && onEnd(side);
+          return;
+        }
+
+        let left = extra;
+        timerRef.current = setInterval(() => {
+          current = (current + 1) % meta.frames;
+          setFrame(current);
+          if (--left <= 0) {
+            clearInterval(timerRef.current);
+            playingRef.current = false;
+            onEnd && onEnd(side);
+          }
+        }, msPerFrame);
       }
     }, msPerFrame);
   };
@@ -68,7 +91,7 @@ export default function CoinSpriteFlipSheet({
   const scale        = size / NATIVE_FRAME;
 
   // posició vertical acumulada: frame * (h/frames), arrodonida a píxel enter
-  const yAcc = Math.round(frame * meta.stepFloat); // 0, 150, 300, 449, 599, ... (es van barrejant 149/150)
+  const yAcc = Math.round(frame * meta.stepFloat); // 0, 150, 299, 449, 599, ...
   const bgPosY = -yAcc;
 
   return (
@@ -94,9 +117,8 @@ export default function CoinSpriteFlipSheet({
             height: meta.h || NATIVE_FRAME,      // 2699
             backgroundImage: `url(${sheetSrc})`,
             backgroundRepeat: "no-repeat",
-            // cap escalat del fons: usem les mides natives exactes
             backgroundSize: `${meta.w || NATIVE_FRAME}px ${meta.h || NATIVE_FRAME}px`,
-            backgroundPosition: `0px ${bgPosY}px`, // salt "dithered" amb acumulació arrodonida
+            backgroundPosition: `0px ${bgPosY}px`,
           }}
         />
       </div>

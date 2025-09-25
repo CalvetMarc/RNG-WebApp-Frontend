@@ -9,6 +9,8 @@ import coinSheet from '../assets/coin_sheet.png'; // ✅ sense dos punts
 export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
+  const [coinCycles, setCoinCycles] = useState(2 + Math.floor(Math.random() * 3));
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -30,10 +32,14 @@ export default function Generator() {
                   sheetSrc={coinSheet}
                   size={150}
                   msPerFrame={50}
-                  cycles={2}
+                  cycles={coinCycles}
                   headIndex={0}  // frame 1 (cara) → index 0
                   tailIndex={9}  // frame 10 (creu) → index 9
-                  onEnd={(side) => setLastCoinResult(side)}
+                  onEnd={(side) => {
+                    setLastCoinResult(side);
+                    // 👇 prepara un nou valor per la pròxima tirada
+                    setCoinCycles(2 + Math.floor(Math.random() * 4));
+                  }}
                 />
               </div>
 
