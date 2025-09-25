@@ -157,3 +157,46 @@ input[type="range"].thumb-max::-moz-range-thumb {
 
 /* Dona més pes a la classe de Tailwind */
 a.underline { text-decoration: underline !important; }
+
+/* --- Botó 3: ghost (sense fons ni vora) --- */
+.button3,
+button.button3 {
+  background: transparent !important;
+  border: none !important;
+  color: inherit;           /* hereta el color del text del context */
+  padding: 0.6em 1.2em;     /* opcional: canvia-ho o posa 0 per botons d'icona */
+  border-radius: 8px;       /* coherent amb la resta */
+  cursor: pointer;
+  box-shadow: none;
+}
+
+/* No canviïs el fons ni en hover ni en focus */
+.button3:hover,
+button.button3:hover {
+  background: transparent !important;
+  color: inherit;           /* o posa un color si vols feedback */
+}
+
+/* Accessibilitat: focus visible sense canviar fons */
+.button3:focus-visible,
+button.button3:focus-visible {
+  outline: 2px solid #374151;   /* gris fosc del teu tema */
+  outline-offset: 2px;
+}
+
+/* Estat desactivat */
+.button3:disabled,
+button.button3:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Variant per botó d'icona (sense padding i línia d'interlineat) */
+.button3--icon,
+button.button3--icon {
+  padding: 0;
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
