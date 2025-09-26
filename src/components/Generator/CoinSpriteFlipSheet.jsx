@@ -4,26 +4,24 @@ import { generateRandomValues } from "../../utils/generateRNG";
 export default function CoinSpriteFlipSheet({
   sheetSrc,
   msPerFrame = 60,
-  cycles = 2,              // # passades senceres del sprite
+  cycles = 2,                // animacions base (passades completes del sheet)
+  turnsMultiplier = 1,       // 👈 multiplica animacions (2 animacions = 1 volta)
   size = 200,
-  headIndex = 0,           // HEADS
-  tailIndex = 9,           // TAILS
-  turnsPerAnimation = 1,   // voltes completes per passada (pot ser 0.5, 2, ...)
+  headIndex = 0,
+  tailIndex = 9,
   onEnd,
 }) {
   const [meta, setMeta] = useState({ w: 150, h: 0, frames: 18, stepFloat: 0 });
   const [frame, setFrame] = useState(headIndex);
   const [angle, setAngle] = useState(0);
+
   const playingRef = useRef(false);
   const timerRef   = useRef(null);
-  const dirRef     = useRef(1); // +1 cw, -1 ccw
 
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
-      const w = img.naturalWidth;     // 150
-      const h = img.naturalHeight;    // ~2699
-      const frames = 18;
+      const w = img.naturalWidth, h = img.naturalHeight, frames = 18;
       setMeta({ w, h, frames, stepFloat: h / frames });
       setFrame(headIndex);
       setAngle(0);
@@ -38,83 +36,74 @@ export default function CoinSpriteFlipSheet({
   };
   const pickDir = async () => {
     const { selected } = await generateRandomValues("RNG1", Date.now() ^ 0x9e3779b9, 0, 1, 1);
-    return selected[0] === 0 ? +1 : -1;
+    return selected[0] === 0 ? +1 : -1; // +1 cw, -1 ccw
   };
 
-  // Normalitza l’angle a l’interval (-180, 180] per repartir el tram final
-  const normalizeDeg = (a) => {
-    let x = ((a + 180) % 360 + 360) % 360 - 180;
-    return x === -180 ? 180 : x;
-  };
+  // Evita arribar a 0° abans d’hora (tanquem just a l’últim pas)
+  const quantizeTurnsSafely = (totalDeg) =>
+    totalDeg >= 0 ? Math.floor(totalDeg / 360) * 360 : Math.ceil(totalDeg / 360) * 360;
 
   const play = async () => {
     if (playingRef.current || meta.frames <= 0) return;
     playingRef.current = true;
 
-    const side     = await pickSide();
-    const endIndex = side === "heads" ? headIndex : tailIndex;
-    dirRef.current = await pickDir();
+    const side        = await pickSide();
+    const endIndex    = side === "heads" ? headIndex : tailIndex;
+    const dir         = await pickDir();
 
-    const FRAMES = meta.frames;
-    const anglePerFrameBase = (360 * turnsPerAnimation * dirRef.current) / FRAMES;
+    const FRAMES         = meta.frames;
+    const start          = frame;
 
-    let current   = frame;
-    let stepCount = 0;
+    // 👇 Nombre d’animacions reals = cycles * turnsMultiplier
+    const animations     = Math.max(1, cycles|0) * Math.max(1, turnsMultiplier|0);
 
-    // ---- Passades senceres (cycles * FRAMES) amb angle base
-    const baseSteps = Math.max(1, cycles) * FRAMES;
+    // Passos base (animacions senceres) + alineació fins al frame final
+    const baseSteps      = animations * FRAMES;
+    const extra          = (endIndex - start + FRAMES) % FRAMES; // 0..FRAMES-1
+    const totalSteps     = baseSteps + extra;
+
+    // 🔑 2 animacions = 1 volta → 1 animació = 180°
+    // Per frame: 180° / FRAMES (amb signe de la direcció)
+    const degPerFrame    = dir * (180 / FRAMES);
+
+    // Angle natural total si no corregíssim res
+    const naturalTotal   = degPerFrame * totalSteps;
+
+    // Ajust: forcem que el total sigui múltiple de 360° (≡ 0°) SENSE passar-nos abans de temps
+    const targetTotal    = quantizeTurnsSafely(naturalTotal);
+    const corrPerStep    = (targetTotal - naturalTotal) / totalSteps;
+
+    let steps = 0;
+    let current = start;
+    let accAngle = 0;
 
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
+      // avança 1 frame
       current = (current + 1) % FRAMES;
       setFrame(current);
-      setAngle((prev) => prev + anglePerFrameBase);
 
-      if (++stepCount >= baseSteps) {
+      // suma angle base + correcció distribuïda
+      accAngle += degPerFrame + corrPerStep;
+      setAngle(accAngle);
+
+      steps += 1;
+      if (steps >= totalSteps) {
         clearInterval(timerRef.current);
-
-        // ---- Alineació fins a endIndex amb correcció d’angle a 0°
-        const extra = (endIndex - current + FRAMES) % FRAMES; // 0..FRAMES-1
-
-        if (extra === 0) {
-          // Ja som al frame final → força angle 0 per no “quedar de costat”
-          setAngle(0);
-          playingRef.current = false;
-          onEnd && onEnd(side);
-          return;
-        }
-
-        // Angle restant per acabar EXACTAMENT a 0°
-        // (prenem l’angle actual i calculem el delta més curt fins a 0)
-        let remainingToZero = normalizeDeg(-angle);
-
-        const anglePerFrameAlign = remainingToZero / extra;
-
-        let left = extra;
-        timerRef.current = setInterval(() => {
-          current = (current + 1) % FRAMES;
-          setFrame(current);
-          setAngle((prev) => prev + anglePerFrameAlign);
-
-          if (--left <= 0) {
-            clearInterval(timerRef.current);
-            // Estat final perfecte
-            setAngle(0);
-            playingRef.current = false;
-            onEnd && onEnd(side);
-          }
-        }, msPerFrame);
+        // Estat final sincronitzat: frame final i angle = 0°
+        setFrame(endIndex);
+        setAngle(0);
+        playingRef.current = false;
+        onEnd && onEnd(side);
       }
     }, msPerFrame);
   };
 
-  // Viewport nadiu i escala
+  // viewport 150x150 que rota; el sheet es veu per backgroundPosition (arrodonit)
   const NATIVE = meta.w || 150;
   const scale  = size / NATIVE;
-
-  // Posició vertical arrodonida per evitar bleeding
-  const yAcc = Math.round(frame * meta.stepFloat);
-  const bgPos = `0px ${-yAcc}px`;
+  const yAcc   = Math.round(frame * meta.stepFloat);
+  const bgPosY = -yAcc;
 
   return (
     <button
@@ -132,7 +121,6 @@ export default function CoinSpriteFlipSheet({
           transformOrigin: "top left",
         }}
       >
-        {/* El viewport rota; el sheet es veu via backgroundPosition */}
         <div
           style={{
             width: NATIVE,
@@ -145,7 +133,7 @@ export default function CoinSpriteFlipSheet({
             backgroundImage: `url(${sheetSrc})`,
             backgroundRepeat: "no-repeat",
             backgroundSize: `${meta.w || NATIVE}px ${meta.h || NATIVE}px`,
-            backgroundPosition: bgPos,
+            backgroundPosition: `0px ${bgPosY}px`,
           }}
         />
       </div>

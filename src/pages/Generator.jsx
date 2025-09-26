@@ -31,12 +31,13 @@ export default function Generator() {
                 sheetSrc={coinSheet}
                 size={150}
                 msPerFrame={50}
-                cycles={2}               // quantes passades completes del sprite vols
+                cycles={2}            // animacions base (p.ex. 2 animacions = 1 volta)
+                turnsMultiplier={3}   // → 2 * 3 = 6 animacions = 3 voltes completes
                 headIndex={0}
                 tailIndex={9}
-                turnsPerAnimation={0.5}    // 🔁 2 voltes per cada passada de 18 frames
                 onEnd={(side) => setLastCoinResult(side)}
               />
+
 
               </div>
 
