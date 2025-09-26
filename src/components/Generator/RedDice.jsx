@@ -69,12 +69,24 @@ export default function RedDice({
 
   return (
     <button
-      className="button3 button3--icon"
       onClick={play}
       aria-label="Roll d20"
       disabled={disableClick}
+      className="button3 inline-flex items-center justify-center p-0 border-0 bg-transparent focus:outline-none"
     >
-      <img src={src} alt="d20" width={size} height={size} draggable="false" />
+      {/* Viewport fix: mida fixa i sense canvis */}
+      <div
+        style={{ width: size, height: size }}
+        className="relative overflow-hidden shrink-0"
+      >
+        <img
+          src={src}
+          alt="d20"
+          className="absolute inset-0 w-full h-full object-contain block select-none pointer-events-none"
+          draggable="false"
+        />
+      </div>
     </button>
   );
+  
 }
