@@ -8,6 +8,7 @@ export default function ScrollBox({
   thumbMin = 24,
   railWidth = 16,
   railGap = 8,
+  bottomPad = 2,          // 👈 coixí extra al fons per evitar retalls
 }) {
   const listRef = useRef(null);
   const contentRef = useRef(null);
@@ -27,19 +28,23 @@ export default function ScrollBox({
     if (!el) return;
 
     const ch = el.clientHeight;
-    const sh = el.scrollHeight;
-    const hasOverflow = sh > ch + 0.5;
 
-    // 👇 clamp de scrollTop per evitar valors negatius o > sh-ch (iOS rubber-banding)
-    const maxScroll = Math.max(0, sh - ch);
+    // 👇 fem servir scrollHeight efectiu restant el coixí inferior
+    const rawSH = el.scrollHeight;
+    const shEff = Math.max(0, rawSH - bottomPad);
+
+    const hasOverflow = shEff > ch + 0.5;
+
+    // clamp de scrollTop contra el màxim efectiu (iOS rubber-banding)
+    const maxScroll = Math.max(0, shEff - ch);
     const clampedScrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
 
-    const h = hasOverflow ? Math.max((ch / Math.max(1, sh)) * ch, thumbMin) : ch;
-    const maxTop = ch - h;
+    const h = hasOverflow ? Math.max((ch / Math.max(1, shEff)) * ch, thumbMin) : ch;
+    const maxTop = Math.max(0, ch - h);
 
-    // 👇 sempre clamp del top
+    // posició del thumb amb sh/ch efectius
     const top = hasOverflow
-      ? Math.max(0, Math.min(maxTop, (clampedScrollTop / Math.max(1, (sh - ch))) * maxTop))
+      ? Math.max(0, Math.min(maxTop, (clampedScrollTop / Math.max(1, (shEff - ch))) * maxTop))
       : 0;
 
     setThumb({ h, top, hasOverflow });
@@ -47,21 +52,22 @@ export default function ScrollBox({
 
   const onRailClick = (e) => {
     if (!thumb.hasOverflow) return;
+
     const rail = e.currentTarget.getBoundingClientRect();
     const clickY = e.clientY - rail.top;
 
     const ch = listRef.current.clientHeight;
-    const sh = listRef.current.scrollHeight;
-    const h = thumb.h;
-    const maxTop = ch - h;
+    const rawSH = listRef.current.scrollHeight;
+    const shEff = Math.max(0, rawSH - bottomPad);
 
-    let targetTop = Math.max(0, Math.min(maxTop, clickY - h / 2));
+    const h = thumb.h;
+    const maxTop = Math.max(0, ch - h);
+
+    const targetTop = Math.max(0, Math.min(maxTop, clickY - h / 2));
     const ratio = maxTop > 0 ? targetTop / maxTop : 0;
 
-    // 👇 també clamp del scroll objectiu
-    const maxScroll = Math.max(0, sh - ch);
+    const maxScroll = Math.max(0, shEff - ch);
     listRef.current.scrollTop = Math.max(0, Math.min(maxScroll, ratio * maxScroll));
-
     requestAnimationFrame(recompute);
   };
 
@@ -73,14 +79,15 @@ export default function ScrollBox({
     e.currentTarget.setPointerCapture?.(e.pointerId);
 
     const ch = el.clientHeight;
-    const sh = el.scrollHeight;
+    const rawSH = el.scrollHeight;
+    const shEff = Math.max(0, rawSH - bottomPad);
 
     dragRef.current.active = true;
     dragRef.current.startY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
     dragRef.current.startTop = thumb.top;
     dragRef.current.ch = ch;
-    dragRef.current.sh = sh;
-    dragRef.current.maxTop = ch - thumb.h;
+    dragRef.current.sh = shEff;           // 👈 guarda l’efectiu
+    dragRef.current.maxTop = Math.max(0, ch - thumb.h);
 
     document.body.style.userSelect = "none";
   };
@@ -99,7 +106,6 @@ export default function ScrollBox({
     const maxScroll = Math.max(0, dragRef.current.sh - dragRef.current.ch);
     el.scrollTop = Math.max(0, Math.min(maxScroll, ratio * maxScroll));
 
-    // update immediat sense transicions → zero jitter
     setThumb((t) => ({ ...t, top: newTop }));
   };
 
@@ -139,7 +145,7 @@ export default function ScrollBox({
       roContent.disconnect();
       window.removeEventListener("resize", recompute);
     };
-  }, []);
+  }, [bottomPad]); // 👈 si canvies el coixí, recalculem
 
   useLayoutEffect(() => {
     const id = requestAnimationFrame(recompute);
@@ -151,7 +157,7 @@ export default function ScrollBox({
   return (
     <div
       className="relative overscroll-contain"
-      style={{ height, touchAction: "pan-y" }}  // 👈 limita gestos i overscroll
+      style={{ height, touchAction: "pan-y" }}
     >
       {/* Scroller (amaguem la nativa només aquí) */}
       <div
@@ -160,7 +166,8 @@ export default function ScrollBox({
         className={`overflow-y-auto [-webkit-overflow-scrolling:touch] ${styles.scrollHidden} ${className}`}
         style={{ height: "100%", paddingRight: pr }}
       >
-        <div ref={contentRef} className="space-y-2">
+        {/* 👇 coixí visual al fons perquè l'últim ítem no quedi retallat */}
+        <div ref={contentRef} className="space-y-2" style={{ paddingBottom: bottomPad }}>
           {children}
         </div>
       </div>
@@ -188,7 +195,6 @@ export default function ScrollBox({
                 )
               : 0
           }
-          // 👇 sense transició per evitar jitter; afegeix 'hover:transition-transform' si la vols al ratolí
           className="absolute right-0 rounded-md bg-gray-700 cursor-pointer touch-none will-change-transform"
           style={{
             width: railWidth,
