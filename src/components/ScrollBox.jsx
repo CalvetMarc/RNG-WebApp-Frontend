@@ -8,7 +8,7 @@ export default function ScrollBox({
   thumbMin = 24,
   railWidth = 16,
   railGap = 8,
-  bottomPad = 2,          // 👈 coixí extra al fons per evitar retalls
+  bottomPad = 1,          // 👈 coixí extra al fons per evitar retalls
 }) {
   const listRef = useRef(null);
   const contentRef = useRef(null);
