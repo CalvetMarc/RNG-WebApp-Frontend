@@ -204,36 +204,53 @@ export default function Wheel({
           <span className="text-sm text-gray-700">
             Sections: {n} (min {minItems}, max {maxItems})
           </span>
-          <button
-            type="button"
-            onClick={addItem}
-            disabled={spinning || n >= maxItems}
-            className="px-3 py-1 rounded bg-black text-white text-sm disabled:opacity-40"
-          >
-            + Add
-          </button>
+          {/* + Add */}
+<button
+  type="button"
+  onClick={addItem}
+  disabled={spinning || n >= maxItems}
+  aria-disabled={spinning || n >= maxItems}
+  title={
+    n >= maxItems
+      ? `Màxim ${maxItems} seccions`
+      : spinning
+        ? "Spinning..."
+        : "Afegir secció"
+  }
+  className="px-3 py-1 rounded bg-black text-white text-sm
+             disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
+             disabled:hover:bg-black"
+>
+  + Add
+</button>
+
         </div>
 
         {/* List + scrollbar card */}
-        <div className="bg-[#7d8e94] rounded-md p-3">
+        <div className="bg-[#8da2a8] rounded-md p-3">
         <ScrollBox height={editorMaxH} bottomPad={n > 3 ? 1 : 0}>
             {items.map((val, i) => (
             <div key={i} className="flex gap-2">
                 <input
-                className="flex-1 rounded border border-gray-600 px-3 py-2 text-sm text-gray-700"
+                className="flex-1 rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-0"
                 value={val}
                 onChange={(e) => updateItem(i, e.target.value)}
                 disabled={spinning}
                 />
-                <button
-                type="button"
-                onClick={() => removeItem(i)}
-                disabled={spinning || n <= minItems}
-                className="px-3 py-2 rounded border text-sm disabled:opacity-40 bg-black text-white"
-                title="Remove section"
-                >
-                Remove
-                </button>
+                {/* Remove (dins del map) */}
+<button
+  type="button"
+  onClick={() => removeItem(i)}
+  disabled={spinning || n <= minItems}
+  aria-disabled={spinning || n <= minItems}
+  title={n <= minItems ? `Calen com a mínim ${minItems} seccions` : "Remove section"}
+  className="px-3 py-2 rounded border bg-black text-white text-sm
+             disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
+             disabled:hover:bg-black disabled:hover:text-white"
+>
+  Remove
+</button>
+
             </div>
             ))}
         </ScrollBox>
