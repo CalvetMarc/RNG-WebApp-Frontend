@@ -3,13 +3,13 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RedDice from '../components/Generator/RedDice';
 import CoinSpriteFlipSheet from '../components/Generator/CoinSpriteFlipSheet';
-import coinSheet from '../assets/coin_sheet.png'; // ✅ sense dos punts
+import coinSheet from '../assets/coin_sheet.png';
+import Wheel from '../components/Generator/Wheel';
 
 export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
   const [diceCycles, setDiceCycles] = useState(1 + Math.floor(Math.random() * 4));
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -18,35 +18,28 @@ export default function Generator() {
       <main className="flex-1 pt-[64px]">
         <div className="mx-auto max-w-[1100px] px-4 md:px-8 py-10">
 
-          {/* 🔲 Fila amb 2 columnes, targetes estirades a la mateixa alçada */}
+          {/* GRID: 2 columnes a partir de md, files automàtiques */}
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+
             {/* Bloc: Moneda */}
             <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
               <p className="text-center text-gray-500">Click the coin to flip.</p>
-
-              {/* Zona central que creix per empènyer el "Result" avall */}
-              <div className="mt-6 flex items-center justify-center flex-1">              
-
-              <CoinSpriteFlipSheet
-                sheetSrc={coinSheet}
-                size={150}
-                msPerFrame={50}      // només com a fallback
-                minStepMs={15}       // 👈 jitter
-                maxStepMs={35}
-                cycles={2}
-                turnsMultiplier={2}  // 2 * 3 = 6 animacions = 3 voltes
-                headIndex={0}
-                tailIndex={9}
-                onEnd={(side) => setLastCoinResult(side)}
-              />
-
-
-
+              <div className="mt-6 flex items-center justify-center flex-1">
+                <CoinSpriteFlipSheet
+                  sheetSrc={coinSheet}
+                  size={150}
+                  msPerFrame={50}
+                  minStepMs={15}
+                  maxStepMs={35}
+                  cycles={2}
+                  turnsMultiplier={2}
+                  headIndex={0}
+                  tailIndex={9}
+                  onEnd={(side) => setLastCoinResult(side)}
+                />
               </div>
-
               <p className="mt-6 text-center text-gray-700">
-                Result:{' '}
-                <span className="font-semibold">
+                Result: <span className="font-semibold">
                   {lastCoinResult ? lastCoinResult.toUpperCase() : '—'}
                 </span>
               </p>
@@ -55,8 +48,6 @@ export default function Generator() {
             {/* Bloc: Dau */}
             <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
               <p className="text-center text-gray-500">Click the dice to roll.</p>
-
-              {/* Mateixa estratègia: que la zona de la imatge ocupi l’espai */}
               <div className="mt-6 flex items-center justify-center flex-1">
                 <RedDice
                   size={200}
@@ -66,17 +57,40 @@ export default function Generator() {
                     setLastDiceResult(n);
                     setDiceCycles(1 + Math.floor(Math.random() * 4));
                   }}
-                  
                 />
               </div>
-
               <p className="mt-6 text-center text-gray-700">
-                Result:{' '}
-                <span className="font-semibold">
+                Result: <span className="font-semibold">
                   {lastDiceResult !== null ? lastDiceResult : '—'}
                 </span>
               </p>
             </div>
+
+            {/* ───────────── 2a FILA ───────────── */}
+
+            {/* Bloc: Wheel */}
+            <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
+              <p className="text-center text-gray-500">Tap the center to spin.</p>
+              <div className="mt-6 flex items-center justify-center flex-1">
+                <Wheel
+                  size={260}
+                  onEnd={(label, idx) => {
+                    // aquí pots fer el que vulguis amb el resultat
+                    console.log("Wheel result:", label, idx);
+                  }}
+                />
+              </div>
+            </div>
+
+
+            {/* Bloc addicional 2 */}
+            <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
+              <p className="text-center text-gray-500">Another widget (placeholder)</p>
+              <div className="mt-6 flex items-center justify-center flex-1">
+                <span className="text-gray-700">Coming soon…</span>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>
