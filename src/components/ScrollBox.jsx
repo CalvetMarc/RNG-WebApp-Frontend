@@ -5,9 +5,9 @@ export default function ScrollBox({
   height,
   children,
   className = "",
-  thumbMin = 24,     // mida mínima del thumb
-  railWidth = 16,    // 👈 gruix del rail + thumb (més gros)
-  railGap = 8,       // 👈 separació llista ↔ rail
+  thumbMin = 24,
+  railWidth = 16,
+  railGap = 8,
 }) {
   const listRef = useRef(null);
   const contentRef = useRef(null);
@@ -25,14 +25,21 @@ export default function ScrollBox({
   const recompute = () => {
     const el = listRef.current;
     if (!el) return;
+
     const ch = el.clientHeight;
     const sh = el.scrollHeight;
     const hasOverflow = sh > ch + 0.5;
 
-    const h = hasOverflow ? Math.max((ch / sh) * ch, thumbMin) : ch;
+    // 👇 clamp de scrollTop per evitar valors negatius o > sh-ch (iOS rubber-banding)
+    const maxScroll = Math.max(0, sh - ch);
+    const clampedScrollTop = Math.max(0, Math.min(el.scrollTop, maxScroll));
+
+    const h = hasOverflow ? Math.max((ch / Math.max(1, sh)) * ch, thumbMin) : ch;
     const maxTop = ch - h;
-    const top = hasOverflow && sh > ch
-      ? Math.min(maxTop, (el.scrollTop / (sh - ch)) * maxTop)
+
+    // 👇 sempre clamp del top
+    const top = hasOverflow
+      ? Math.max(0, Math.min(maxTop, (clampedScrollTop / Math.max(1, (sh - ch))) * maxTop))
       : 0;
 
     setThumb({ h, top, hasOverflow });
@@ -45,14 +52,16 @@ export default function ScrollBox({
 
     const ch = listRef.current.clientHeight;
     const sh = listRef.current.scrollHeight;
-
     const h = thumb.h;
     const maxTop = ch - h;
 
     let targetTop = Math.max(0, Math.min(maxTop, clickY - h / 2));
     const ratio = maxTop > 0 ? targetTop / maxTop : 0;
 
-    listRef.current.scrollTop = ratio * (sh - ch);
+    // 👇 també clamp del scroll objectiu
+    const maxScroll = Math.max(0, sh - ch);
+    listRef.current.scrollTop = Math.max(0, Math.min(maxScroll, ratio * maxScroll));
+
     requestAnimationFrame(recompute);
   };
 
@@ -84,15 +93,13 @@ export default function ScrollBox({
     const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
     const dy = clientY - dragRef.current.startY;
 
-    const newTop = Math.max(
-      0,
-      Math.min(dragRef.current.maxTop, dragRef.current.startTop + dy)
-    );
-
+    const newTop = Math.max(0, Math.min(dragRef.current.maxTop, dragRef.current.startTop + dy));
     const ratio = dragRef.current.maxTop > 0 ? newTop / dragRef.current.maxTop : 0;
-    const targetScroll = ratio * (dragRef.current.sh - dragRef.current.ch);
 
-    el.scrollTop = targetScroll;
+    const maxScroll = Math.max(0, dragRef.current.sh - dragRef.current.ch);
+    el.scrollTop = Math.max(0, Math.min(maxScroll, ratio * maxScroll));
+
+    // update immediat sense transicions → zero jitter
     setThumb((t) => ({ ...t, top: newTop }));
   };
 
@@ -104,7 +111,7 @@ export default function ScrollBox({
   };
 
   useEffect(() => {
-    window.addEventListener("pointermove", onThumbPointerMove);
+    window.addEventListener("pointermove", onThumbPointerMove, { passive: true });
     window.addEventListener("pointerup", endDrag);
     window.addEventListener("pointercancel", endDrag);
     return () => {
@@ -139,11 +146,13 @@ export default function ScrollBox({
     return () => cancelAnimationFrame(id);
   });
 
-  // padding-right = gruix del rail + gap (per no trepitjar contingut)
   const pr = railWidth + railGap;
 
   return (
-    <div className="relative" style={{ height }}>
+    <div
+      className="relative overscroll-contain"
+      style={{ height, touchAction: "pan-y" }}  // 👈 limita gestos i overscroll
+    >
       {/* Scroller (amaguem la nativa només aquí) */}
       <div
         ref={listRef}
@@ -156,7 +165,7 @@ export default function ScrollBox({
         </div>
       </div>
 
-      {/* Rail + thumb personalitzats (més gruixuts) */}
+      {/* Rail + thumb */}
       <div
         className="absolute right-0 top-0 h-full"
         style={{ width: railWidth }}
@@ -174,12 +183,15 @@ export default function ScrollBox({
           aria-valuemax={100}
           aria-valuenow={
             thumb.hasOverflow
-              ? Math.round((thumb.top / Math.max(1, (listRef.current?.clientHeight || 1) - thumb.h)) * 100)
+              ? Math.round(
+                  (thumb.top / Math.max(1, (listRef.current?.clientHeight || 1) - thumb.h)) * 100
+                )
               : 0
           }
-          className="absolute right-0 rounded-md bg-gray-700 transition-transform cursor-pointer touch-none"
+          // 👇 sense transició per evitar jitter; afegeix 'hover:transition-transform' si la vols al ratolí
+          className="absolute right-0 rounded-md bg-gray-700 cursor-pointer touch-none will-change-transform"
           style={{
-            width: railWidth,                 // 👈 gruix del thumb
+            width: railWidth,
             height: `${thumb.h}px`,
             transform: `translateY(${thumb.top}px)`,
           }}
