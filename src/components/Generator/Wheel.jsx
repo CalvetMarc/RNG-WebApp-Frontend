@@ -87,8 +87,8 @@ export default function Wheel({
     const delta = normalize(POINTER_DEG - desiredAngle - currentNorm);
 
     // Garantir mínim 3 voltes (3..6)
-    const MIN_TURNS = 3;
-    const extraRandomTurns = Math.floor(Math.random() * 4); // 0..3 addicionals
+    const MIN_TURNS = 2;
+    const extraRandomTurns = Math.floor(Math.random() * 12); // 0..3 addicionals
     const totalTurns = MIN_TURNS + extraRandomTurns;
 
     // graus totals d'aquest spin i angle final acumulat (sempre creixent)
@@ -256,41 +256,43 @@ export default function Wheel({
       </p>
 
       {/* editor de seccions */}
-      <div className="mt-6 w-full max-w-[520px]">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600">
-            Sections: {n} (min {minItems}, max {maxItems})
-          </span>
-          <button
-            type="button"
-            onClick={addItem}
-            disabled={n >= maxItems}
-            className="px-3 py-1 rounded bg-black text-white text-sm disabled:opacity-40"
-          >
-            + Add
-          </button>
-        </div>
-        <div className="space-y-2">
-          {items.map((val, i) => (
-            <div key={i} className="flex gap-2">
-              <input
-                className="flex-1 rounded border border-gray-500 px-3 py-2 text-sm text-gray-700"
-                value={val}
-                onChange={(e) => updateItem(i, e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => removeItem(i)}
-                disabled={n <= minItems}
-                className="px-3 py-2 rounded border text-sm disabled:opacity-40"
-                title="Remove section"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
+<div className="mt-6 w-full max-w-[520px]">
+  <div className="flex items-center justify-between mb-2">
+    <span className="text-sm text-gray-600">
+      Sections: {n} (min {minItems}, max {maxItems})
+    </span>
+    <button
+      type="button"
+      onClick={addItem}
+      disabled={spinning || n >= maxItems}   // 🔹 ara també es desactiva si spinning
+      className="px-3 py-1 rounded bg-black text-white text-sm disabled:opacity-40"
+    >
+      + Add
+    </button>
+  </div>
+  <div className="space-y-2">
+    {items.map((val, i) => (
+      <div key={i} className="flex gap-2">
+        <input
+          className="flex-1 rounded border border-gray-500 px-3 py-2 text-sm text-gray-700"
+          value={val}
+          onChange={(e) => updateItem(i, e.target.value)}
+          disabled={spinning}   // 🔹 input també bloquejat durant el spin
+        />
+        <button
+          type="button"
+          onClick={() => removeItem(i)}
+          disabled={spinning || n <= minItems}   // 🔹 també es desactiva si spinning
+          className="px-3 py-2 rounded border text-sm disabled:opacity-40"
+          title="Remove section"
+        >
+          Remove
+        </button>
       </div>
+    ))}
+  </div>
+</div>
+
     </div>
   );
 }
