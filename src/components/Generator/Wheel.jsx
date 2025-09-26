@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { generateRandomValues } from "../../utils/generateRNG";
+import ScrollBox from "../ScrollBox";
 
 // Helpers geom
 const toRad = (deg) => (deg * Math.PI) / 180;
@@ -20,7 +21,7 @@ const POINTER_DEG = -90;
 
 export default function Wheel({
   size = 260,
-  minItems = 2,
+  minItems = 3,
   maxItems = 10,
   onEnd, // (label: string, index: number)
 }) {
@@ -154,10 +155,12 @@ export default function Wheel({
     }
   }, [n]);
 
+  
+
   const MAX_VISIBLE_ROWS = 3;
   const ROW_H = 44;   // alçada aproximada de cada fila (input + padding)
   const GAP   = 8;    // espai vertical entre files (tailwind space-y-2 ≈ 8px)
-  const editorMaxH = MAX_VISIBLE_ROWS * ROW_H + (MAX_VISIBLE_ROWS - 1) * GAP; // px
+  const editorMaxH = MAX_VISIBLE_ROWS * ROW_H + (MAX_VISIBLE_ROWS - 1) * GAP;
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -247,7 +250,7 @@ export default function Wheel({
       </p>
 
       {/* editor de seccions */}
-<div className="mt-6 w-full max-w-[520px]">
+      <div className="mt-6 w-full max-w-[520px]">
   <div className="flex items-center justify-between mb-2">
     <span className="text-sm text-gray-600">
       Sections: {n} (min {minItems}, max {maxItems})
@@ -262,32 +265,30 @@ export default function Wheel({
     </button>
   </div>
 
-  {/* 👇 Scrollable quan hi ha més de 3 elements */}
-  <div
-    className={`space-y-2 ${items.length > MAX_VISIBLE_ROWS ? 'overflow-y-auto pr-1' : ''}`}
-    style={items.length > MAX_VISIBLE_ROWS ? { maxHeight: editorMaxH } : undefined}
-  >
-    {items.map((val, i) => (
-      <div key={i} className="flex gap-2">
-        <input
-          className="flex-1 rounded border border-gray-500 px-3 py-2 text-sm text-gray-700"
-          value={val}
-          onChange={(e) => updateItem(i, e.target.value)}
-          disabled={spinning}
-        />
-        <button
-          type="button"
-          onClick={() => removeItem(i)}
-          disabled={spinning || n <= minItems}
-          className="px-3 py-2 rounded border text-sm disabled:opacity-40"
-          title="Remove section"
-        >
-          Remove
-        </button>
-      </div>
-    ))}
-  </div>
+  {/* 👇 Scroll personalitzat (es veu igual a iOS) */}
+  <ScrollBox height={editorMaxH}>
+  {items.map((val, i) => (
+    <div key={i} className="flex gap-2">
+      <input
+        className="flex-1 rounded border border-gray-500 px-3 py-2 text-sm text-gray-700"
+        value={val}
+        onChange={(e) => updateItem(i, e.target.value)}
+        disabled={spinning}
+      />
+      <button
+        type="button"
+        onClick={() => removeItem(i)}
+        disabled={spinning || n <= minItems}
+        className="px-3 py-2 rounded border text-sm disabled:opacity-40"
+        title="Remove section"
+      >
+        Remove
+      </button>
+    </div>
+  ))}
+</ScrollBox>
 </div>
+
 
 
     </div>
