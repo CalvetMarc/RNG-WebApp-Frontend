@@ -3,9 +3,11 @@ import { generateRandomValues } from "../../utils/generateRNG";
 
 export default function CoinSpriteFlipSheet({
   sheetSrc,
-  msPerFrame = 60,
-  cycles = 2,                // animacions base (passades completes del sheet)
-  turnsMultiplier = 1,       // 👈 multiplica animacions (2 animacions = 1 volta)
+  msPerFrame = 60,          // valor base (només per fallback)
+  cycles = 2,               // animacions base (passades completes del sheet)
+  turnsMultiplier = 1,      // 2 animacions = 1 volta → multiplica animacions
+  minStepMs = 35,           // 👈 delay mínim per pas (ms)
+  maxStepMs = 60,           // 👈 delay màxim per pas (ms)
   size = 200,
   headIndex = 0,
   tailIndex = 9,
@@ -27,7 +29,7 @@ export default function CoinSpriteFlipSheet({
       setAngle(0);
     };
     img.src = sheetSrc;
-    return () => clearInterval(timerRef.current);
+    return () => clearTimeout(timerRef.current);
   }, [sheetSrc, headIndex]);
 
   const pickSide = async () => {
@@ -39,9 +41,19 @@ export default function CoinSpriteFlipSheet({
     return selected[0] === 0 ? +1 : -1; // +1 cw, -1 ccw
   };
 
-  // Evita arribar a 0° abans d’hora (tanquem just a l’últim pas)
+  // 2 animacions = 1 volta ⇒ 1 animació = 180° ⇒ per frame = 180/FRAMES (amb signe)
+  const degPerFrameBase = (dir, FRAMES) => dir * (180 / FRAMES);
+
+  // Evitem arribar a 0° abans d'hora: quantitzem a múltiple de 360° sense “passar-nos”
   const quantizeTurnsSafely = (totalDeg) =>
     totalDeg >= 0 ? Math.floor(totalDeg / 360) * 360 : Math.ceil(totalDeg / 360) * 360;
+
+  // delay aleatori per pas (clamp + fallback)
+  const nextDelay = () => {
+    const a = Math.max(1, Math.min(minStepMs, maxStepMs));
+    const b = Math.max(1, Math.max(minStepMs, maxStepMs));
+    return a === b ? a : Math.floor(a + Math.random() * (b - a + 1));
+  };
 
   const play = async () => {
     if (playingRef.current || meta.frames <= 0) return;
@@ -51,55 +63,49 @@ export default function CoinSpriteFlipSheet({
     const endIndex    = side === "heads" ? headIndex : tailIndex;
     const dir         = await pickDir();
 
-    const FRAMES         = meta.frames;
-    const start          = frame;
+    const FRAMES      = meta.frames;
+    const start       = frame;
 
-    // 👇 Nombre d’animacions reals = cycles * turnsMultiplier
-    const animations     = Math.max(1, cycles|0) * Math.max(1, turnsMultiplier|0);
+    const animations  = Math.max(1, cycles|0) * Math.max(1, turnsMultiplier|0);
+    const baseSteps   = animations * FRAMES;
+    const extra       = (endIndex - start + FRAMES) % FRAMES;
+    const totalSteps  = baseSteps + extra;
 
-    // Passos base (animacions senceres) + alineació fins al frame final
-    const baseSteps      = animations * FRAMES;
-    const extra          = (endIndex - start + FRAMES) % FRAMES; // 0..FRAMES-1
-    const totalSteps     = baseSteps + extra;
-
-    // 🔑 2 animacions = 1 volta → 1 animació = 180°
-    // Per frame: 180° / FRAMES (amb signe de la direcció)
-    const degPerFrame    = dir * (180 / FRAMES);
-
-    // Angle natural total si no corregíssim res
-    const naturalTotal   = degPerFrame * totalSteps;
-
-    // Ajust: forcem que el total sigui múltiple de 360° (≡ 0°) SENSE passar-nos abans de temps
-    const targetTotal    = quantizeTurnsSafely(naturalTotal);
-    const corrPerStep    = (targetTotal - naturalTotal) / totalSteps;
+    const perStep     = degPerFrameBase(dir, FRAMES);
+    const naturalTot  = perStep * totalSteps;
+    const targetTot   = quantizeTurnsSafely(naturalTot);
+    const corrPerStep = (targetTot - naturalTot) / totalSteps;
 
     let steps = 0;
     let current = start;
     let accAngle = 0;
 
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      // avança 1 frame
+    const tick = () => {
+      // avançar 1 pas
       current = (current + 1) % FRAMES;
       setFrame(current);
 
-      // suma angle base + correcció distribuïda
-      accAngle += degPerFrame + corrPerStep;
+      accAngle += perStep + corrPerStep;
       setAngle(accAngle);
 
       steps += 1;
       if (steps >= totalSteps) {
-        clearInterval(timerRef.current);
-        // Estat final sincronitzat: frame final i angle = 0°
+        // final sincronitzat: frame final + angle 0°
         setFrame(endIndex);
         setAngle(0);
         playingRef.current = false;
         onEnd && onEnd(side);
+        return;
       }
-    }, msPerFrame);
+      // planifica el següent pas amb delay aleatori
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(tick, nextDelay() || msPerFrame);
+    };
+
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(tick, nextDelay() || msPerFrame);
   };
 
-  // viewport 150x150 que rota; el sheet es veu per backgroundPosition (arrodonit)
   const NATIVE = meta.w || 150;
   const scale  = size / NATIVE;
   const yAcc   = Math.round(frame * meta.stepFloat);

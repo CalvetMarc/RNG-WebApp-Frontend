@@ -30,13 +30,16 @@ export default function Generator() {
               <CoinSpriteFlipSheet
                 sheetSrc={coinSheet}
                 size={150}
-                msPerFrame={50}
-                cycles={2}            // animacions base (p.ex. 2 animacions = 1 volta)
-                turnsMultiplier={3}   // → 2 * 3 = 6 animacions = 3 voltes completes
+                msPerFrame={50}      // només com a fallback
+                minStepMs={15}       // 👈 jitter
+                maxStepMs={35}
+                cycles={2}
+                turnsMultiplier={2}  // 2 * 3 = 6 animacions = 3 voltes
                 headIndex={0}
                 tailIndex={9}
                 onEnd={(side) => setLastCoinResult(side)}
               />
+
 
 
               </div>
