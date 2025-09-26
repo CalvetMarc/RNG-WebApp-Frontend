@@ -8,7 +8,7 @@ import coinSheet from '../assets/coin_sheet.png'; // ✅ sense dos punts
 export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
-  const [coinCycles, setCoinCycles] = useState(2 + Math.floor(Math.random() * 3));
+  const [diceCycles, setDiceCycles] = useState(1 + Math.floor(Math.random() * 4));
 
 
   return (
@@ -61,8 +61,12 @@ export default function Generator() {
                 <RedDice
                   size={200}
                   msPerFrame={50}
-                  cycles={2}
-                  onEnd={(n) => setLastDiceResult(n)}
+                  cycles={diceCycles}
+                  onEnd={(n) => {
+                    setLastDiceResult(n);
+                    setDiceCycles(1 + Math.floor(Math.random() * 4));
+                  }}
+                  
                 />
               </div>
 
