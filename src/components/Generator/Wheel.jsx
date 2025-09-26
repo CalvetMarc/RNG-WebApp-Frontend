@@ -16,7 +16,6 @@ function arcPath(cx, cy, r, a0, a1) {
 }
 
 // 0° = dreta (horari). TOP és -90°.
-// Si el triangle el tens “girant”, deixa aquest valor a -90 igualment (apunta al TOP visual).
 const POINTER_DEG = -90;
 
 export default function Wheel({
@@ -29,8 +28,11 @@ export default function Wheel({
   const [spinning, setSpinning] = useState(false);
   const [resultIdx, setResultIdx] = useState(null);
 
-  // rotació acumulada (0° = dreta; -90° = dalt)
+  // Estat només per a càlculs/label (normalitzat 0..359)
   const [rotation, setRotation] = useState(0);
+
+  // Angle acumulat monòton per al DOM (NO normalitzat)
+  const angleAccumRef = useRef(0);
   const wheelRef = useRef(null);
 
   const n = items.length;
@@ -61,7 +63,7 @@ export default function Wheel({
     }
   };
 
-  // SPIN (amb marge per evitar fronteres)
+  // SPIN amb marge per evitar fronteres i min 3 voltes
   const spin = async () => {
     if (spinning || n < minItems) return;
     setSpinning(true);
@@ -69,37 +71,50 @@ export default function Wheel({
     const idx = await pickIndex(); // 0..n-1
     const centerAngle = (idx + 0.5) * slice;
 
-    // marge mínim a cada vora del sector (mai toquem frontera)
-    const MARGIN = Math.min(6, slice * 0.2);      // 6° o 20% del sector
-    const span = Math.max(0, slice / 2 - MARGIN); // rang des del centre
+    // marge mínim a cada vora del sector (mai tocar frontera)
+    const MARGIN = Math.min(6, slice * 0.2);
+    const span = Math.max(0, slice / 2 - MARGIN);
     const offset = (Math.random() * 2 - 1) * span; // [-span, +span]
 
     // angle objectiu (centre desplaçat) que ha de quedar sota el punter
     const desiredAngle = centerAngle + offset;
 
-    // quant hem de girar des de la rotació actual perquè desiredAngle quedi a POINTER_DEG?
-    const delta = normalize(POINTER_DEG - desiredAngle - rotation);
+    // angle actual per a càlculs (normalitzat), però mantenint l'acumulat per al DOM
+    const currentAccum = angleAccumRef.current;   // p. ex. 1440, 1980...
+    const currentNorm  = normalize(currentAccum); // 0..359
 
-    // voltes extra per l’animació
-    const extraTurns = 3 + Math.floor(Math.random() * 4); // 3..6
-    const target = extraTurns * 360 + delta;
-    const finalRot = rotation + target;
+    // quant hem de girar perquè desiredAngle quedi a POINTER_DEG?
+    const delta = normalize(POINTER_DEG - desiredAngle - currentNorm);
+
+    // Garantir mínim 3 voltes (3..6)
+    const MIN_TURNS = 3;
+    const extraRandomTurns = Math.floor(Math.random() * 4); // 0..3 addicionals
+    const totalTurns = MIN_TURNS + extraRandomTurns;
+
+    // graus totals d'aquest spin i angle final acumulat (sempre creixent)
+    const totalDeg = totalTurns * 360 + delta;
+    const finalAngle = currentAccum + totalDeg;
+
+    // durada proporcional als graus (velocitat aparent constant)
+    const degPerSecond = 520;                      // ajustable
+    const duration = Math.max(1.2, totalDeg / degPerSecond);
 
     const el = wheelRef.current;
     if (el) {
-      el.style.transition = "transform 2.4s cubic-bezier(0.19, 1, 0.22, 1)";
-      el.style.transform = `rotate(${finalRot}deg)`;
+      el.style.transition = `transform ${duration}s cubic-bezier(0.19, 1, 0.22, 1)`;
+      el.style.transform = `rotate(${finalAngle}deg)`;
     }
 
     const onDone = () => {
       el?.removeEventListener("transitionend", onDone);
-      const norm = normalize(finalRot);
+
+      // Actualitza acumulat (DOM) i normalitzat (càlculs/label)
+      angleAccumRef.current = finalAngle;
+      const norm = normalize(finalAngle);
       setRotation(norm);
 
-      // ── Detecció geomètrica del sector que queda sota el punter ──
-      // Angle del punter dins del sistema de la roda
+      // ── Detecció del sector sota el punter ──
       const pointerInWheel = normalize(POINTER_DEG - norm);
-      // Com els sectors es dibuixen començant a -90°, compensem +90
       const angleFromTop = normalize(pointerInWheel + 90);
       let iFinal = Math.floor(angleFromTop / slice);
       if (iFinal >= n) iFinal = n - 1;
@@ -108,7 +123,7 @@ export default function Wheel({
       setResultIdx(iFinal);
       onEnd && onEnd(items[iFinal], iFinal);
 
-      if (el) el.style.transition = "none";
+      // No toquem el transform (es queda al finalAngle per al proper spin)
     };
     el?.addEventListener("transitionend", onDone);
   };
@@ -127,14 +142,14 @@ export default function Wheel({
     setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
   };
 
-  // mantenim l’angle quan canvien items
+  // Quan canvien els items, sincronitza el DOM amb l'angle acumulat (sense animació)
   useEffect(() => {
     const el = wheelRef.current;
     if (el) {
       el.style.transition = "none";
-      el.style.transform = `rotate(${rotation}deg)`;
+      el.style.transform = `rotate(${angleAccumRef.current}deg)`;
     }
-  }, [n]); // eslint-disable-line
+  }, [n]);
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -183,8 +198,8 @@ export default function Wheel({
           {/* punxes (pegs) a cada frontera cap a fora */}
           {items.map((_, i) => {
             const a = i * slice - 90;
-            const pinLen = Math.max(6, size * 0.03);     // llargada
-            const pinWdeg = Math.min(8, slice * 0.25);   // amplada angular base
+            const pinLen = Math.max(6, size * 0.03);
+            const pinWdeg = Math.min(8, slice * 0.25);
             const [bx1, by1] = polar(r, a - pinWdeg / 2, cx, cy);
             const [bx2, by2] = polar(r, a + pinWdeg / 2, cx, cy);
             const [tx, ty] = polar(r + pinLen, a, cx, cy);
@@ -224,12 +239,11 @@ export default function Wheel({
           type="button"
           onClick={spin}
           disabled={spinning || n < minItems}
-          className="absolute inset-0 m-auto rounded-full bg-white border-2 border-black shadow z-10
-                     flex items-center justify-center text-sm font-semibold disabled:opacity-50"
-          style={{ width: size * 0.28, height: size * 0.28 }}
+          className="button4 absolute inset-0 m-auto z-10 select-none"
+          style={{ "--btn4-size": `${size * 0.28}px` }}
           aria-label="Spin the wheel"
         >
-          {spinning ? "Spinning…" : "SPIN"}
+          {spinning ? "SPIN…" : "SPIN"}
         </button>
       </div>
 
