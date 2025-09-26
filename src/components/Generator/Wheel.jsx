@@ -98,11 +98,8 @@ export default function Wheel({
 
     // durada proporcional als graus (velocitat aparent constant)
     const degPerSecond = 520;                      // ajustable
-    const duration = Math.max(1.2, totalDeg / degPerSecond);
-
+    const duration = Math.max(1.2, totalDeg / degPerSecond);  
     
-
-
     const el = wheelRef.current;
     if (el) {
       el.style.transition = `transform ${duration}s cubic-bezier(0.19, 1, 0.22, 1)`;
