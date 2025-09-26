@@ -99,6 +99,9 @@ export default function Wheel({
     const degPerSecond = 520;                      // ajustable
     const duration = Math.max(1.2, totalDeg / degPerSecond);
 
+    
+
+
     const el = wheelRef.current;
     if (el) {
       el.style.transition = `transform ${duration}s cubic-bezier(0.19, 1, 0.22, 1)`;
@@ -151,6 +154,11 @@ export default function Wheel({
     }
   }, [n]);
 
+  const MAX_VISIBLE_ROWS = 3;
+  const ROW_H = 44;   // alçada aproximada de cada fila (input + padding)
+  const GAP   = 8;    // espai vertical entre files (tailwind space-y-2 ≈ 8px)
+  const editorMaxH = MAX_VISIBLE_ROWS * ROW_H + (MAX_VISIBLE_ROWS - 1) * GAP; // px
+
   return (
     <div className="w-full flex flex-col items-center">
       {/* Wheel */}
@@ -193,45 +201,28 @@ export default function Wheel({
                 strokeWidth="1"
               />
             );
-          })}
-
-          {/* punxes (pegs) a cada frontera cap a fora */}
-          {items.map((_, i) => {
-            const a = i * slice - 90;
-            const pinLen = Math.max(6, size * 0.03);
-            const pinWdeg = Math.min(8, slice * 0.25);
-            const [bx1, by1] = polar(r, a - pinWdeg / 2, cx, cy);
-            const [bx2, by2] = polar(r, a + pinWdeg / 2, cx, cy);
-            const [tx, ty] = polar(r + pinLen, a, cx, cy);
-            return (
-              <polygon
-                key={`peg${i}`}
-                points={`${bx1},${by1} ${bx2},${by2} ${tx},${ty}`}
-                fill="black"
-                opacity="0.85"
-              />
-            );
-          })}
+          })}          
 
           {/* etiquetes */}
-          {items.map((label, i) => {
-            const angle = (i + 0.5) * slice - 90;
-            const [tx, ty] = polar(r * 0.62, angle, cx, cy);
-            return (
-              <text
-                key={`t${i}`}
-                x={tx}
-                y={ty}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={Math.max(10, size * 0.055)}
-                fill="#111"
-                transform={`rotate(${angle + 90}, ${tx}, ${ty})`}
-              >
-                {label}
-              </text>
-            );
-          })}
+        {items.map((label, i) => {
+        const angle = (i + 0.5) * slice - 90;
+        const [tx, ty] = polar(r * 0.62, angle, cx, cy);
+        return (
+            <text
+            key={`t${i}`}
+            x={tx}
+            y={ty}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={Math.max(10, size * 0.055)}
+            fill="#111"
+            transform={`rotate(${angle}, ${tx}, ${ty})`}   // 🔹 girem cap al centre
+            >
+            {label}
+            </text>
+        );
+        })}
+
         </svg>
 
         {/* botó central */}
@@ -264,25 +255,30 @@ export default function Wheel({
     <button
       type="button"
       onClick={addItem}
-      disabled={spinning || n >= maxItems}   // 🔹 ara també es desactiva si spinning
+      disabled={spinning || n >= maxItems}
       className="px-3 py-1 rounded bg-black text-white text-sm disabled:opacity-40"
     >
       + Add
     </button>
   </div>
-  <div className="space-y-2">
+
+  {/* 👇 Scrollable quan hi ha més de 3 elements */}
+  <div
+    className={`space-y-2 ${items.length > MAX_VISIBLE_ROWS ? 'overflow-y-auto pr-1' : ''}`}
+    style={items.length > MAX_VISIBLE_ROWS ? { maxHeight: editorMaxH } : undefined}
+  >
     {items.map((val, i) => (
       <div key={i} className="flex gap-2">
         <input
           className="flex-1 rounded border border-gray-500 px-3 py-2 text-sm text-gray-700"
           value={val}
           onChange={(e) => updateItem(i, e.target.value)}
-          disabled={spinning}   // 🔹 input també bloquejat durant el spin
+          disabled={spinning}
         />
         <button
           type="button"
           onClick={() => removeItem(i)}
-          disabled={spinning || n <= minItems}   // 🔹 també es desactiva si spinning
+          disabled={spinning || n <= minItems}
           className="px-3 py-2 rounded border text-sm disabled:opacity-40"
           title="Remove section"
         >
@@ -292,6 +288,7 @@ export default function Wheel({
     ))}
   </div>
 </div>
+
 
     </div>
   );
