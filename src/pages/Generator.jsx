@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import GoldCoinFlip from '../components/Generator/GoldCoinFlip';
 import RedDice from '../components/Generator/RedDice';
 import CoinSpriteFlipSheet from '../components/Generator/CoinSpriteFlipSheet';
 import coinSheet from '../assets/coin_sheet.png'; // ✅ sense dos punts
@@ -28,19 +27,17 @@ export default function Generator() {
               {/* Zona central que creix per empènyer el "Result" avall */}
               <div className="mt-6 flex items-center justify-center flex-1">              
 
-                <CoinSpriteFlipSheet
-                  sheetSrc={coinSheet}
-                  size={150}
-                  msPerFrame={50}
-                  cycles={coinCycles}
-                  headIndex={0}  // frame 1 (cara) → index 0
-                  tailIndex={9}  // frame 10 (creu) → index 9
-                  onEnd={(side) => {
-                    setLastCoinResult(side);
-                    // 👇 prepara un nou valor per la pròxima tirada
-                    setCoinCycles(2 + Math.floor(Math.random() * 4));
-                  }}
-                />
+              <CoinSpriteFlipSheet
+                sheetSrc={coinSheet}
+                size={150}
+                msPerFrame={50}
+                cycles={2}               // quantes passades completes del sprite vols
+                headIndex={0}
+                tailIndex={9}
+                turnsPerAnimation={0.5}    // 🔁 2 voltes per cada passada de 18 frames
+                onEnd={(side) => setLastCoinResult(side)}
+              />
+
               </div>
 
               <p className="mt-6 text-center text-gray-700">
