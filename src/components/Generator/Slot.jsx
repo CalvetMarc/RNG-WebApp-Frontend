@@ -42,7 +42,7 @@ export default function Slot() {
         <div
           className="absolute z-20 grid place-items-center"
           style={{
-            top: '39%',               // alineació vertical global
+            top: '38.5%',               // alineació vertical global
             left: '40.6%',            // alineació horitzontal global (centre)
             width: '43%',             // ample total del rail
             height: '15%',            // alçada total del rail
@@ -82,7 +82,7 @@ export default function Slot() {
         {/* Botó palanca */}
         <button
           onClick={pull}
-          className="absolute inset-0 m-auto z-50 select-none !border-none focus:outline-none focus:ring-0"
+          className="button4 absolute inset-0 m-auto z-50 select-none !border-none focus:outline-none focus:ring-0"
           style={{
             top: '27%',
             left: '69.8%',
