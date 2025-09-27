@@ -2,10 +2,13 @@
 import machineBase  from '../../assets/slot/slot-machine1.png';
 import machineLever from '../../assets/slot/slot-machine2.png';
 
+import sym7      from '../../assets/slot/slot-symbol1.png';
+import symCherry from '../../assets/slot/slot-symbol2.png';
+import symBell   from '../../assets/slot/slot-symbol3.png';
+
 export default function Slot() {
   return (
     <div className="relative mx-auto w-full">
-      {/* Marc: ocupa % relatiu del bloc i talla l'aire sobrera amb overflow-hidden */}
       <div
         className="
           relative mx-auto overflow-hidden
@@ -13,23 +16,67 @@ export default function Slot() {
         "
         aria-label="Slot machine"
       >
-        {/* Base: fem la imatge una mica més ampla i la movem a l'esquerra */}
+        {/* Base */}
         <img
           src={machineBase}
           alt=""
           draggable={false}
-          className="block pointer-events-none
-                     w-[120%] -translate-x-[10%] h-auto"
+          className="block pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
 
-        {/* Palanca: idèntic desplaçament perquè quedi alineada */}
+        {/* Palanca */}
         <img
           src={machineLever}
           alt=""
           draggable={false}
-          className="absolute inset-0 pointer-events-none
-                     w-[120%] -translate-x-[10%] h-auto"
+          className="absolute inset-0 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
+
+        {/* ───────── Columna de símbols (escala amb la slot) ───────── */}
+        <div
+          className="absolute flex flex-col items-center"
+          style={{
+            top: '27%',          // punt de referència
+            left: '17.3%',
+            width: '15%',        // ← el % de l’ample de la slot
+            rowGap: '6%',        // separació vertical
+          }}
+        >
+          <img src={symCherry} alt="Cherry" className="w-full h-auto block" />
+          <img src={sym7}      alt="Seven"  className="w-full h-auto block" />
+          <img src={symBell}   alt="Bell"   className="w-full h-auto block" />
+        </div>
+
+        {/* ───────── Columna de símbols (escala amb la slot) ───────── */}
+        <div
+          className="absolute flex flex-col items-center"
+          style={{
+            top: '27%',          // punt de referència
+            left: '33.2%',
+            width: '15%',        // ← el % de l’ample de la slot
+            rowGap: '6%',        // separació vertical
+          }}
+        >
+          <img src={symCherry} alt="Cherry" className="w-full h-auto block" />
+          <img src={sym7}      alt="Seven"  className="w-full h-auto block" />
+          <img src={symBell}   alt="Bell"   className="w-full h-auto block" />
+        </div>
+
+        {/* ───────── Columna de símbols (escala amb la slot) ───────── */}
+        <div
+        className="absolute flex flex-col items-center"
+        style={{
+            top: '27%',          // punt de referència
+            left: '49.1%',
+            width: '15%',        // ← el % de l’ample de la slot
+            rowGap: '6%',        // separació vertical
+        }}
+        >
+        <img src={symCherry} alt="Cherry" className="w-full h-auto block" />
+        <img src={sym7}      alt="Seven"  className="w-full h-auto block" />
+        <img src={symBell}   alt="Bell"   className="w-full h-auto block" />
+        </div>
+
       </div>
     </div>
   );
