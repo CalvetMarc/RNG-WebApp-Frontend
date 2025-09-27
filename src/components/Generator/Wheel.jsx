@@ -227,34 +227,34 @@ export default function Wheel({
         </div>
 
         {/* List + scrollbar card */}
-        <div className="bg-[#8da2a8] rounded-md p-3">
-        <ScrollBox height={editorMaxH} bottomPad={n > 3 ? 1 : 0}>
-            {items.map((val, i) => (
-            <div key={i} className="flex gap-2">
-                <input
-                className="flex-1 rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-0"
-                value={val}
-                onChange={(e) => updateItem(i, e.target.value)}
-                disabled={spinning}
-                />
-                {/* Remove (dins del map) */}
-<button
-  type="button"
-  onClick={() => removeItem(i)}
-  disabled={spinning || n <= minItems}
-  aria-disabled={spinning || n <= minItems}
-  title={n <= minItems ? `Calen com a mínim ${minItems} seccions` : "Remove section"}
-  className="px-3 py-2 rounded border bg-black text-white text-sm
-             disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
-             disabled:hover:bg-black disabled:hover:text-white"
->
-  Remove
-</button>
-
-            </div>
-            ))}
-        </ScrollBox>
+        {/* List + scrollbar card */}
+<div className="bg-[#8da2a8] rounded-md p-3">
+  <ScrollBox height={editorMaxH} bottomPad={n > 3 ? 2 : 0}>
+    <div className="flex flex-col gap-2 pr-3">
+      {items.map((val, i) => (
+        <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2">
+          <input
+            className="w-full rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 
+                       text-sm text-gray-700 focus:outline-none focus:ring-0"
+            value={val}
+            onChange={(e) => updateItem(i, e.target.value)}
+            disabled={spinning}
+          />
+          <button
+            type="button"
+            onClick={() => removeItem(i)}
+            disabled={spinning || n <= minItems}
+            className="px-3 py-2 rounded border bg-black text-white text-sm
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Remove
+          </button>
         </div>
+      ))}
+    </div>
+  </ScrollBox>
+</div>
+
 
       </div>
     </div>
