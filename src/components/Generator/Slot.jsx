@@ -7,14 +7,14 @@ import sym7      from '../../assets/slot/slot-symbol1.png';
 import symCherry from '../../assets/slot/slot-symbol2.png';
 import symBell   from '../../assets/slot/slot-symbol3.png';
 
-export default function Slot() {
+export default function Slot({ onPull }) {
   return (
     <div className="relative mx-auto w-full">
       <div
         className="relative mx-auto overflow-hidden w-[120%]"
         aria-label="Slot machine"
       >
-        {/* Rails background (baix de tot) */}
+        {/* Rails background */}
         <img
           src={machineRails}
           alt=""
@@ -22,7 +22,7 @@ export default function Slot() {
           className="absolute inset-0 z-10 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
 
-        {/* Símbols (al mig) */}
+        {/* Símbols */}
         <div
           className="absolute z-20 flex flex-col items-center"
           style={{
@@ -65,7 +65,7 @@ export default function Slot() {
           <img src={symBell}   alt="Bell"   className="w-full h-auto block" />
         </div>
 
-        {/* Base de la màquina (a sobre dels símbols, però conserva l'altura del layout) */}
+        {/* Base */}
         <img
           src={machineBase}
           alt=""
@@ -73,13 +73,37 @@ export default function Slot() {
           className="relative z-30 block pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
 
-        {/* Palanca (més a dalt de tot) */}
+        {/* Palanca */}
         <img
           src={machineLever}
-          alt=""
+          alt="Slot lever"
           draggable={false}
           className="absolute inset-0 z-40 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
+
+        {/* 🔹 Botó invisible sobre la palanca */}
+        <button
+          onClick={onPull}
+          className="button4 absolute inset-0 m-auto z-50 select-none !border-none"
+          style={{
+            top: '27%',      // percentatge vertical dins la imatge
+            left: '69.8%',     // percentatge horitzontal dins la imatge
+            width: '14%',    // ample relatiu
+            height: '18%',   // alt relatiu
+            transform: 'translate(-50%, -50%)',
+             background: 'transparent',
+            cursor: 'pointer',
+            border: 'none',
+            outline: 'none',
+            boxShadow: 'none',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+          aria-label="Pull the lever"
+        >
+        Pull
+        </button>
       </div>
     </div>
   );
