@@ -5,11 +5,13 @@ import RedDice from '../components/Generator/RedDice';
 import CoinSpriteFlipSheet from '../components/Generator/CoinSpriteFlipSheet';
 import coinSheet from '../assets/coin_sheet.png';
 import Wheel from '../components/Generator/Wheel';
+import Slot from '../components/Generator/Slot';   // 🔹 importa el nou component
 
 export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
   const [diceCycles, setDiceCycles] = useState(1 + Math.floor(Math.random() * 4));
+  const [lastSlotResult, setLastSlotResult] = useState(null);    // 🔹 estat per al slot
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -75,20 +77,24 @@ export default function Generator() {
                 <Wheel
                   size={260}
                   onEnd={(label, idx) => {
-                    // aquí pots fer el que vulguis amb el resultat
                     console.log("Wheel result:", label, idx);
                   }}
                 />
               </div>
             </div>
 
-
-            {/* Bloc addicional 2 */}
+            {/* Slot */}
             <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
-              <p className="text-center text-gray-500">Another widget (placeholder)</p>
+              <p className="text-center text-gray-500">Apreta la palanca per jugar.</p>
               <div className="mt-6 flex items-center justify-center flex-1">
-                <span className="text-gray-700">Coming soon…</span>
+                <Slot
+                  size={320}
+                  onEnd={(result) => setLastSlotResult(result)}
+                />
               </div>
+              <p className="mt-6 text-center text-gray-700">
+                Result: <span className="font-semibold">{lastSlotResult || '—'}</span>
+              </p>
             </div>
 
           </div>
