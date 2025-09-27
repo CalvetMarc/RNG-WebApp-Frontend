@@ -19,37 +19,23 @@ function arcPath(cx, cy, r, a0, a1) {
 const POINTER_DEG = -90;
 
 /* =======================
-   Helpers: mesurar i truncar text a px (només per a l’SVG)
+   Canvas per mesurar text (reutilitzat)
    ======================= */
-function useTextMeasurer(fontPx) {
+function useSharedCanvas() {
   const canvasRef = useRef(null);
   if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
   const ctx = canvasRef.current.getContext("2d");
-
-  useEffect(() => {
-    ctx.font = `${fontPx}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"`;
-  }, [fontPx, ctx]);
-
-  const width = useCallback((text) => ctx.measureText(text).width, [ctx]);
-  return width;
+  return ctx;
 }
 
-function clampTextToPx(text, maxPx, measure) {
-  if (!text) return "";
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (measure(clean) <= maxPx) return clean;
-
-  const ell = "…";
-  const ellW = measure(ell);
-
-  let lo = 0, hi = clean.length;
-  while (lo < hi) {
-    const mid = ((lo + hi + 1) / 2) | 0;
-    const candidate = clean.slice(0, mid);
-    if (measure(candidate) + ellW <= maxPx) lo = mid;
-    else hi = mid - 1;
-  }
-  return clean.slice(0, lo) + ell;
+// Mesura text amb la mateixa font real d'un input concret
+function measureWithInputFont(ctx, inputEl, text) {
+  if (!inputEl) return Infinity;
+  const cs = getComputedStyle(inputEl);
+  // Repliquem la font de l’input
+  const font = `${cs.fontStyle} ${cs.fontVariant} ${cs.fontWeight} ${cs.fontSize} / ${cs.lineHeight} ${cs.fontFamily}`;
+  ctx.font = font;
+  return ctx.measureText(text).width;
 }
 
 export default function Wheel({
@@ -65,6 +51,9 @@ export default function Wheel({
   const angleAccumRef = useRef(0);
   const wheelRef = useRef(null);
 
+  // refs dels inputs per poder calcular amplades reals
+  const inputRefs = useRef([]);
+
   const n = items.length;
   const slice = 360 / n;
   const r = size / 2;
@@ -75,17 +64,39 @@ export default function Wheel({
     [n]
   );
 
-  // Límits i mesura de labels (només per renderitzar a l’SVG)
+  // ------- DISPLAY de la ruleta (truncat amb “…” a 0.65·r) -------
   const labelFontPx = useMemo(() => Math.max(10, size * 0.055), [size]);
-  const measureText = useTextMeasurer(labelFontPx);
+  const labelCanvasCtx = useSharedCanvas();
+  const measureLabel = useCallback(
+    (text) => {
+      // font de l’SVG (aprox. amb system-ui i mida labelFontPx)
+      labelCanvasCtx.font = `${labelFontPx}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"`;
+      return labelCanvasCtx.measureText(text).width;
+    },
+    [labelCanvasCtx, labelFontPx]
+  );
+  const clampTextToPx = useCallback((text, maxPx, measure) => {
+    if (!text) return "";
+    const clean = text.replace(/\s+/g, " ").trim();
+    if (measure(clean) <= maxPx) return clean;
+    const ell = "…";
+    const ellW = measure(ell);
+    let lo = 0, hi = clean.length;
+    while (lo < hi) {
+      const mid = ((lo + hi + 1) / 2) | 0;
+      const candidate = clean.slice(0, mid);
+      if (measure(candidate) + ellW <= maxPx) lo = mid;
+      else hi = mid - 1;
+    }
+    return clean.slice(0, lo) + ell;
+  }, []);
   const maxLabelPx = r * 0.65;
-
-  // Labels preparats només per a DISPLAY (inputs resten intactes)
   const displayLabels = useMemo(
-    () => items.map((t) => clampTextToPx(t, maxLabelPx, measureText)),
-    [items, maxLabelPx, measureText]
+    () => items.map((t) => clampTextToPx(t, maxLabelPx, measureLabel)),
+    [items, maxLabelPx, measureLabel, clampTextToPx]
   );
 
+  // ------- RNG + spin -------
   const pickIndex = async () => {
     try {
       let seed;
@@ -163,10 +174,63 @@ export default function Wheel({
     setResultIdx(null);
   };
 
-  // 👉 Inputs intactes: NO clamping aquí
-  const updateItem = (i, v) => {
-    setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
-  };
+  /* =======================
+     IMP: Limitar el text dels inputs a l’ample visible
+     ======================= */
+  const inputCanvasCtx = useSharedCanvas();
+
+  // calcula el màxim d’ample útil dins l’input i clampa el text a aquest ample (sense “…”)
+  const clampToFitInput = useCallback(
+    (text, i) => {
+      const el = inputRefs.current[i];
+      if (!el) return text;
+
+      const cs = getComputedStyle(el);
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padR = parseFloat(cs.paddingRight) || 0;
+      const borderL = parseFloat(cs.borderLeftWidth) || 0;
+      const borderR = parseFloat(cs.borderRightWidth) || 0;
+
+      // amplada interna disponible per al text
+      const maxPx =
+        el.clientWidth - padL - padR - borderL - borderR - 2; // petit marge
+
+      const clean = text.replace(/\s+/g, " "); // permet espais però normalitza
+      // mesura ràpida: si hi cap, tornem tal qual
+      if (measureWithInputFont(inputCanvasCtx, el, clean) <= maxPx) return clean;
+
+      // cerca binària per tallar exactament on càpiga
+      let lo = 0, hi = clean.length;
+      while (lo < hi) {
+        const mid = ((lo + hi + 1) / 2) | 0;
+        const candidate = clean.slice(0, mid);
+        if (measureWithInputFont(inputCanvasCtx, el, candidate) <= maxPx) lo = mid;
+        else hi = mid - 1;
+      }
+      return clean.slice(0, lo);
+    },
+    [inputCanvasCtx]
+  );
+
+  // onChange d'input: impedeix escriure més del que cap
+  const handleChange = useCallback(
+    (i, raw) => {
+      const next = clampToFitInput(raw, i);
+      setItems((prev) => prev.map((x, idx) => (idx === i ? next : x)));
+    },
+    [clampToFitInput]
+  );
+
+  // Revalidar si canvia l’ample (resize de finestra) perquè no quedi text “sobrant”
+  useEffect(() => {
+    const onResize = () => {
+      setItems((prev) =>
+        prev.map((txt, i) => clampToFitInput(txt, i))
+      );
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [clampToFitInput]);
 
   useEffect(() => {
     const el = wheelRef.current;
@@ -279,10 +343,11 @@ export default function Wheel({
               {items.map((val, i) => (
                 <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2">
                   <input
+                    ref={(el) => (inputRefs.current[i] = el)}
                     className="w-full rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 
                                text-sm text-gray-700 focus:outline-none focus:ring-0"
                     value={val}
-                    onChange={(e) => updateItem(i, e.target.value)}
+                    onChange={(e) => handleChange(i, e.target.value)}
                     disabled={spinning}
                   />
                   <button
