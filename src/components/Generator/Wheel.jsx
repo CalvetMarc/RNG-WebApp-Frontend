@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { generateRandomValues } from "../../utils/generateRNG";
 import ScrollBox from "../ScrollBox";
 
@@ -17,6 +17,40 @@ function arcPath(cx, cy, r, a0, a1) {
 }
 
 const POINTER_DEG = -90;
+
+/* =======================
+   Helpers: mesurar i truncar text a px (només per a l’SVG)
+   ======================= */
+function useTextMeasurer(fontPx) {
+  const canvasRef = useRef(null);
+  if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
+  const ctx = canvasRef.current.getContext("2d");
+
+  useEffect(() => {
+    ctx.font = `${fontPx}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"`;
+  }, [fontPx, ctx]);
+
+  const width = useCallback((text) => ctx.measureText(text).width, [ctx]);
+  return width;
+}
+
+function clampTextToPx(text, maxPx, measure) {
+  if (!text) return "";
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (measure(clean) <= maxPx) return clean;
+
+  const ell = "…";
+  const ellW = measure(ell);
+
+  let lo = 0, hi = clean.length;
+  while (lo < hi) {
+    const mid = ((lo + hi + 1) / 2) | 0;
+    const candidate = clean.slice(0, mid);
+    if (measure(candidate) + ellW <= maxPx) lo = mid;
+    else hi = mid - 1;
+  }
+  return clean.slice(0, lo) + ell;
+}
 
 export default function Wheel({
   size = 260,
@@ -39,6 +73,17 @@ export default function Wheel({
   const colors = useMemo(
     () => Array.from({ length: n }, (_, i) => `hsl(${(i * 360) / n}, 70%, 60%)`),
     [n]
+  );
+
+  // Límits i mesura de labels (només per renderitzar a l’SVG)
+  const labelFontPx = useMemo(() => Math.max(10, size * 0.055), [size]);
+  const measureText = useTextMeasurer(labelFontPx);
+  const maxLabelPx = r * 0.65;
+
+  // Labels preparats només per a DISPLAY (inputs resten intactes)
+  const displayLabels = useMemo(
+    () => items.map((t) => clampTextToPx(t, maxLabelPx, measureText)),
+    [items, maxLabelPx, measureText]
   );
 
   const pickIndex = async () => {
@@ -111,11 +156,14 @@ export default function Wheel({
     if (n >= maxItems) return;
     setItems((prev) => [...prev, `Option ${prev.length + 1}`]);
   };
+
   const removeItem = (i) => {
     if (n <= minItems) return;
     setItems((prev) => prev.filter((_, idx) => idx !== i));
     setResultIdx(null);
   };
+
+  // 👉 Inputs intactes: NO clamping aquí
   const updateItem = (i, v) => {
     setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
   };
@@ -148,7 +196,7 @@ export default function Wheel({
           viewBox={`0 0 ${size} ${size}`}
           className="rounded-full shadow-md bg-white"
         >
-          {items.map((label, i) => {
+          {items.map((_, i) => {
             const a0 = i * slice - 90;
             const a1 = (i + 1) * slice - 90;
             return <path key={i} d={arcPath(cx, cy, r, a0, a1)} fill={colors[i]} />;
@@ -160,7 +208,7 @@ export default function Wheel({
             return <line key={`s${i}`} x1={cx} y1={cy} x2={x} y2={y} stroke="white" strokeWidth="1" />;
           })}
 
-          {items.map((label, i) => {
+          {items.map((_, i) => {
             const angle = (i + 0.5) * slice - 90;
             const [tx, ty] = polar(r * 0.62, angle, cx, cy);
             return (
@@ -170,11 +218,11 @@ export default function Wheel({
                 y={ty}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize={Math.max(10, size * 0.055)}
+                fontSize={labelFontPx}
                 fill="#111"
                 transform={`rotate(${angle}, ${tx}, ${ty})`}
               >
-                {label}
+                {displayLabels[i]}
               </text>
             );
           })}
@@ -204,58 +252,53 @@ export default function Wheel({
           <span className="text-sm text-gray-700">
             Sections: {n} (min {minItems}, max {maxItems})
           </span>
-          {/* + Add */}
-<button
-  type="button"
-  onClick={addItem}
-  disabled={spinning || n >= maxItems}
-  aria-disabled={spinning || n >= maxItems}
-  title={
-    n >= maxItems
-      ? `Màxim ${maxItems} seccions`
-      : spinning
-        ? "Spinning..."
-        : "Afegir secció"
-  }
-  className="px-3 py-1 rounded bg-black text-white text-sm
-             disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
-             disabled:hover:bg-black"
->
-  + Add
-</button>
-
-        </div>
-
-        {/* List + scrollbar card */}
-        {/* List + scrollbar card */}
-<div className="bg-[#8da2a8] rounded-md p-3">
-  <ScrollBox height={editorMaxH} bottomPad={n > 3 ? 2 : 0}>
-    <div className="flex flex-col gap-2 pr-3">
-      {items.map((val, i) => (
-        <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2">
-          <input
-            className="w-full rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 
-                       text-sm text-gray-700 focus:outline-none focus:ring-0"
-            value={val}
-            onChange={(e) => updateItem(i, e.target.value)}
-            disabled={spinning}
-          />
           <button
             type="button"
-            onClick={() => removeItem(i)}
-            disabled={spinning || n <= minItems}
-            className="px-3 py-2 rounded border bg-black text-white text-sm
-                       disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={addItem}
+            disabled={spinning || n >= maxItems}
+            aria-disabled={spinning || n >= maxItems}
+            title={
+              n >= maxItems
+                ? `Màxim ${maxItems} seccions`
+                : spinning
+                ? "Spinning..."
+                : "Afegir secció"
+            }
+            className="px-3 py-1 rounded bg-black text-white text-sm
+                       disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
+                       disabled:hover:bg-black"
           >
-            Remove
+            + Add
           </button>
         </div>
-      ))}
-    </div>
-  </ScrollBox>
-</div>
 
-
+        {/* List + scrollbar card */}
+        <div className="bg-[#8da2a8] rounded-md p-3">
+          <ScrollBox height={editorMaxH} bottomPad={n > 3 ? 2 : 0}>
+            <div className="flex flex-col gap-2 pr-3">
+              {items.map((val, i) => (
+                <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2">
+                  <input
+                    className="w-full rounded border-2 border-gray-600 bg-[#7d8e94] px-3 py-2 
+                               text-sm text-gray-700 focus:outline-none focus:ring-0"
+                    value={val}
+                    onChange={(e) => updateItem(i, e.target.value)}
+                    disabled={spinning}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i)}
+                    disabled={spinning || n <= minItems}
+                    className="px-3 py-2 rounded border bg-black text-white text-sm
+                               disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </ScrollBox>
+        </div>
       </div>
     </div>
   );
