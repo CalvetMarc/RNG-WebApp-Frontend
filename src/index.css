@@ -237,6 +237,7 @@ button.button4 {
   opacity: .55;
   cursor: not-allowed;
   transform: none;
+  pointer-events: none;
 }
 
 /* mode clar: lleuger ajust de colors */

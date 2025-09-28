@@ -360,7 +360,8 @@ export default function Wheel({
                     onClick={() => removeItem(i)}
                     disabled={spinning || n <= minItems}
                     className="px-3 py-2 rounded border bg-black text-white text-sm
-                               disabled:opacity-40 disabled:cursor-not-allowed"
+                               disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
+                       disabled:hover:bg-black"
                   >
                     Remove
                   </button>

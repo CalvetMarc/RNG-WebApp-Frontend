@@ -21,7 +21,7 @@ export default function Generator() {
         <div className="mx-auto max-w-[1100px] px-4 md:px-8 py-10">
 
           {/* GRID: 2 columnes a partir de md, files automàtiques */}
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-15 items-stretch">
 
             {/* Bloc: Moneda */}
             <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
