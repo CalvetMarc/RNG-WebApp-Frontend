@@ -1,12 +1,11 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
-import DocApi from './pages/DocApi';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
 import ScrollToTop from './components/ScrollToTop';
-import Generator from './pages/Generator';
+import Showcase from './pages/Showcase';
 
 const DEBUG = false;
 function App() {
@@ -27,7 +26,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/visualizer" element={<Dashboard />} />
-        <Route path="/generator" element={<Generator />} />
+        <Route path="/showcase" element={<Showcase />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />

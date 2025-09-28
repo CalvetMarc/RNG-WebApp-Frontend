@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import RedDice from '../components/Generator/RedDice';
-import CoinSpriteFlipSheet from '../components/Generator/CoinSpriteFlipSheet';
+import RedDice from '../components/Showcase/RedDice';
+import CoinSpriteFlipSheet from '../components/Showcase/CoinSpriteFlipSheet';
 import coinSheet from '../assets/coin_sheet.png';
-import Wheel from '../components/Generator/Wheel';
-import Slot from '../components/Generator/Slot';   // 🔹 importa el nou component
+import Wheel from '../components/Showcase/Wheel';
+import Slot from '../components/Showcase/Slot';   // 🔹 importa el nou component
 
-export default function Generator() {
+export default function Showcase() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
   const [diceCycles, setDiceCycles] = useState(1 + Math.floor(Math.random() * 4));

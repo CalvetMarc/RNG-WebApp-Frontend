@@ -49,12 +49,12 @@ export default function Navbar() {
             </Link>
 
             <Link
-              to="/generator"  // si la teva ruta real és /generate, canvia-ho aquí i a l'isActive
-              aria-current={isActive('/generator') ? 'page' : undefined}
-              className={navBase + (isActive('/generator') ? activeDeco : '')}
+              to="/showcase"  // si la teva ruta real és /generate, canvia-ho aquí i a l'isActive
+              aria-current={isActive('/showcase') ? 'page' : undefined}
+              className={navBase + (isActive('/showcase') ? activeDeco : '')}
               style={{ left: 'calc(50% + 120px)' }}
             >
-              Generator
+              Showcase
             </Link>
           </div>
         </div>

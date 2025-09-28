@@ -18,7 +18,6 @@ const SYMBOLS = [
   { key: 'BAR',    img: symBar    }, // 3
 ];
 
-// Tira (strip) per rodet — personalitzables
 const STRIP0 = [0, 1, 2, 3];
 const STRIP1 = [0, 2, 1, 3];
 const STRIP2 = [2, 0, 3, 1];
@@ -38,13 +37,16 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
   // timings base de parada seqüencial
   const reelDurMs = useRef([1100, 1500, 1900]);
 
-  // paràmetres de “feel”
+  // feel
   const baseRevPerSec = 7;
   const minSpinRounds = 2;
-
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-  // Deriva la graella 3×3 a partir dels tops
+  // NEW: settle frames (evita parar just després d’un tick)
+  const settleRef = useRef([0, 0, 0]);      // frames consecutius al target per rodet
+  const SETTLE_FRAMES = 1;                  // prova 1–2 per més robustesa
+  const EPS_MS = 20;                        // petit marge extra de temps
+
   const visibleGrid = (() => {
     const col0 = [0, 1, 2].map(r => STRIPS[0][mod(reelTop[0] + r, STRIPS[0].length)]);
     const col1 = [0, 1, 2].map(r => STRIPS[1][mod(reelTop[1] + r, STRIPS[1].length)]);
@@ -62,33 +64,33 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
     setIsSpinning(true);
     onStart?.('...');
 
-    // 1) objectiu final per a cada rodet (0..len-1)
+    // objectiu final per a cada rodet (0..len-1)
     const { selected } = await generateRandomValues('RNG1', Date.now(), 0, 3, 3);
     const targetTop = [selected[0] | 0, selected[1] | 0, selected[2] | 0];
     targetTopRef.current = targetTop;
 
-    // 🔹 Durades d'aquesta tirada (còpia local per no tocar les base)
+    // durades d'aquesta tirada
     const durMsThisSpin = [...reelDurMs.current];
 
-    // 🔹 Si col 1 i col 2 tindran un 7 al MIG, allarguem col 3
+    // si col 1 i 2 tindran un 7 al mig, allarga una mica col 3
     {
       const stripLen0 = STRIPS[0].length;
       const stripLen1 = STRIPS[1].length;
-
       const mid0 = STRIPS[0][(targetTop[0] + 1) % stripLen0];
       const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1];
-
       if (mid0 === 1 && mid1 === 1) {
         const factor = 1.7 + Math.random() * 0.8;
         durMsThisSpin[2] = Math.round(durMsThisSpin[2] * factor);
       }
     }
 
-    // 2) snapshot i temps
+    // snapshot i temps
     fromTopRef.current = reelTop.slice();
     startRef.current = performance.now();
 
-    // 3) animació
+    // NEW: reset del settle
+    settleRef.current = [0, 0, 0];
+
     cancelAnimationFrame(animRef.current);
     const loop = (now) => {
       const dt = Math.max(0, now - startRef.current);
@@ -114,15 +116,27 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
         }
       }
 
+      // NEW: compta frames consecutius al target per rodet
+      for (let i = 0; i < 3; i++) {
+        if (next[i] === targetTopRef.current[i]) {
+          settleRef.current[i] = Math.min(SETTLE_FRAMES, settleRef.current[i] + 1);
+        } else {
+          settleRef.current[i] = 0;
+        }
+      }
+
       setReelTop(next);
 
-      if (dt < Math.max(...durMsThisSpin)) {
-        animRef.current = requestAnimationFrame(loop);
-      } else {
+      // NEW: condició de final robusta
+      const allDoneTime = dt >= (Math.max(...durMsThisSpin) + EPS_MS);
+      const allSettled  = settleRef.current.every(fr => fr >= SETTLE_FRAMES);
+
+      if (allDoneTime && allSettled) {
         const finalTop = targetTopRef.current.slice();
         setReelTop(finalTop);
         setIsSpinning(false);
 
+        // Resultat fila central
         const mids = [0, 1, 2].map((i) => {
           const strip = STRIPS[i];
           const top = finalTop[i];
@@ -131,11 +145,13 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
         let resultText = 'Loss';
         const same = (v) => mids.every((x) => x === v);
-        if (same(3)) resultText = 'Gum Win';
-        else if (same(1)) resultText = 'Jackpot Win';
-        else if (same(0) || same(2)) resultText = 'Win';
+        if (same(3)) resultText = 'Gum Win';          // BAR BAR BAR
+        else if (same(1)) resultText = 'Jackpot Win'; // 7 7 7
+        else if (same(0) || same(2)) resultText = 'Win'; // CHERRY×3 o BELL×3
 
         onEnd?.(resultText, mids);
+      } else {
+        animRef.current = requestAnimationFrame(loop);
       }
     };
 
@@ -144,20 +160,19 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
   useEffect(() => () => cancelAnimationFrame(animRef.current), []);
 
-  // escalar tot el bloc (amplada relativa)
-  const wrapperWidth = `${(size / 320) * 120}%`; // 120% base → escalar amb size
+  // escala/offset visuals (es queda igual que tens)
+  const wrapperWidth = `${(size / 320) * 120}%`;
   const translateX = '-12%';
 
   return (
-    // ⬇️⬇️⬇️ CANVIS: retalla qualsevol excés i evita pan lateral
     <div
-      className="relative mx-auto w-full overflow-x-hidden"                // ⬅️ clip horitzontal
-      style={{ maxWidth: `${size}px`, overscrollBehaviorX: 'none' }}       // ⬅️ clampa i evita rebot
+      className="relative mx-auto w-full overflow-x-hidden"
+      style={{ maxWidth: `${size}px`, overscrollBehaviorX: 'none' }}
     >
       <div
         className="relative mx-auto overflow-hidden"
         aria-label="Slot machine"
-        style={{ width: wrapperWidth, touchAction: 'pan-y' }}              // ⬅️ només pan vertical
+        style={{ width: wrapperWidth, touchAction: 'pan-y' }}
       >
         {/* Rails */}
         <img
