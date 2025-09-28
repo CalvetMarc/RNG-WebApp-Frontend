@@ -40,12 +40,12 @@ export default function Navbar() {
             </Link>
 
             <Link
-              to="/visualizer"
-              aria-current={isActive('/visualizer') ? 'page' : undefined}
-              className={navBase + (isActive('/visualizer') ? activeDeco : '')}
+              to="/generator"
+              aria-current={isActive('/generator') ? 'page' : undefined}
+              className={navBase + (isActive('/generator') ? activeDeco : '')}
               style={{ left: 'calc(50% - 120px)' }}
             >
-              Visualizer
+              Generator
             </Link>
 
             <Link
@@ -119,21 +119,21 @@ export default function Navbar() {
               </Link>
 
               <Link
-                to="/visualizer"
-                onClick={() => setMenuOpen(false)}
-                aria-current={isActive('/visualizer') ? 'page' : undefined}
-                className={'text-blue-400 text-lg hover:text-blue-300' + (isActive('/visualizer') ? activeDeco : '')}
-              >
-                Visualizer
-              </Link>
-
-              <Link
                 to="/generator"
                 onClick={() => setMenuOpen(false)}
                 aria-current={isActive('/generator') ? 'page' : undefined}
                 className={'text-blue-400 text-lg hover:text-blue-300' + (isActive('/generator') ? activeDeco : '')}
               >
                 Generator
+              </Link>
+
+              <Link
+                to="/showcase"
+                onClick={() => setMenuOpen(false)}
+                aria-current={isActive('/showcase') ? 'page' : undefined}
+                className={'text-blue-400 text-lg hover:text-blue-300' + (isActive('/showcase') ? activeDeco : '')}
+              >
+                Showcase
               </Link>
 
               <a

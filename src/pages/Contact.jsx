@@ -166,7 +166,6 @@ export default function Contact() {
             placeholder="Type your message here..."
           />
           <p className="mt-1 text-xs text-gray-600">
-            Lines wrap automatically; a vertical scrollbar appears if the content exceeds the height.
           </p>
         </div>
 

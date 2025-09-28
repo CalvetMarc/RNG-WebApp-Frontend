@@ -9,16 +9,17 @@ export default function FinalCTA() {
       </h2>
       <p className="text-gray-700 max-w-2xl mx-auto mb-8 text-base md:text-lg"> 
         Explore and customize all the options the Visualizer has to offer, 
-        from observing the PRNG’s own optimization to listening to music generated directly from its numbers. If you prefer a quick result, head over 
-        to the Generator, where you can input your own data to produce a truly random output. 
+        from observing the PRNG’s own optimization to listening to music generated directly from its numbers. 
+        If you prefer to see quick applications in potential real products, take a look at the Showcase and try out the different game-style demos.
+
       </p>      
       <div className="flex flex-row justify-center space-x-4">
-        <Link to="/visualizer" className="inline-block">
-          <button className="button2 w-40">Try Visualizer</button>
-        </Link>
         <Link to="/generator" className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation">
               Quick Generation
-          </Link>
+        </Link>
+        <Link to="/showcase" className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation">
+              Explore Showcase
+        </Link>       
       </div>
     </section>
   );

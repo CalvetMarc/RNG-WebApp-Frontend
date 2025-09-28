@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-import ModeSwitch from '../components/Dashboard/ModeSwitch';
-import RNGConfigPanel from '../components/Dashboard/RNGConfigPanel';
-import CoreVisualizations from '../components/Dashboard/CoreVisualizations/CoreVisualizations';
-import ExperimentalVisuals from '../components/Dashboard/ExperimentalVisuals/ExperemintalVisuals';
+import ModeSwitch from '../components/Generator/ModeSwitch';
+import RNGConfigPanel from '../components/Generator/RNGConfigPanel';
+import CoreVisualizations from '../components/Generator/CoreVisualizations/CoreVisualizations';
+import ExperimentalVisuals from '../components/Generator/ExperimentalVisuals/ExperemintalVisuals';
 
 export default function Dashboard() {
   const [mode, setMode] = useState('explore');

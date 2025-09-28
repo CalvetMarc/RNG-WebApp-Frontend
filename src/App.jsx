@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
+import Generator from './pages/Generator';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
 import Contact from './pages/Contact';
@@ -25,7 +25,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/visualizer" element={<Dashboard />} />
+        <Route path="/generator" element={<Generator />} />
         <Route path="/showcase" element={<Showcase />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />

@@ -53,7 +53,7 @@ export default function Hero() {
 
             <Link
               to="/generator"
-              className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation"
+              className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation md:mb-0 mb-10"
             >
               Quick Generation
             </Link>
