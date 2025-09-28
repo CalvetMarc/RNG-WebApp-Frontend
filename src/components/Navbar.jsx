@@ -20,8 +20,7 @@ export default function Navbar() {
         {/* Free PRNG (desktop) */}
         <Link
           to="/"
-          className="absolute left-0 top-1/2 -translate-y-1/2 font-bold text-xl hidden md:block text-white no-underline cursor-pointer hover:!text-white focus:!text-white active:!text-white visited:!text-white"
-          onClick={() => setMenuOpen(false)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 font-bold text-xl hidden md:block text-white no-underline cursor-pointer hover:!text-white focus:!text-white active:!text-white visited:!text-white z-10"
         >
           Free PRNG
         </Link>
@@ -72,8 +71,8 @@ export default function Navbar() {
             </a>
 
             <a
-              href="/download/freeprng.zip"
-              className="hover:text-blue-400 text-3xl"
+              href="/download/pcg32-prng-main.zip"
+              className="text-3xl"
             >
               <FaFileArchive />
             </a>
@@ -146,7 +145,7 @@ export default function Navbar() {
               </a>
 
               <a
-                href="/download/freeprng.zip"
+                href="/download/pcg32-prng-main.zip"
                 className="hover:text-blue-400 text-3xl"
               >
                 <FaFileArchive />
