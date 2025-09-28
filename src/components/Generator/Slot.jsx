@@ -79,7 +79,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
       const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1]; // símbol mig col 2
 
       if (mid0 === 1 && mid1 === 1) { // 7 és index 1
-        const factor = 1.5 + Math.random() * 0.5; // [1.3, 1.5)
+        const factor = 1.7 + Math.random() * 0.8; // [1.3, 1.5)
         durMsThisSpin[2] = Math.round(durMsThisSpin[2] * factor);
       }
     }
