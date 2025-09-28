@@ -32,7 +32,6 @@ function useSharedCanvas() {
 function measureWithInputFont(ctx, inputEl, text) {
   if (!inputEl) return Infinity;
   const cs = getComputedStyle(inputEl);
-  // Repliquem la font de l’input
   const font = `${cs.fontStyle} ${cs.fontVariant} ${cs.fontWeight} ${cs.fontSize} / ${cs.lineHeight} ${cs.fontFamily}`;
   ctx.font = font;
   return ctx.measureText(text).width;
@@ -46,7 +45,7 @@ export default function Wheel({
 }) {
   const [items, setItems] = useState(["Option 1", "Option 2", "Option 3"]);
   const [spinning, setSpinning] = useState(false);
-  const [resultIdx, setResultIdx] = useState(null);
+  const [resultIdx, setResultIdx] = useState(0);
 
   const angleAccumRef = useRef(0);
   const wheelRef = useRef(null);
@@ -69,7 +68,6 @@ export default function Wheel({
   const labelCanvasCtx = useSharedCanvas();
   const measureLabel = useCallback(
     (text) => {
-      // font de l’SVG (aprox. amb system-ui i mida labelFontPx)
       labelCanvasCtx.font = `${labelFontPx}px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"`;
       return labelCanvasCtx.measureText(text).width;
     },
@@ -179,7 +177,6 @@ export default function Wheel({
      ======================= */
   const inputCanvasCtx = useSharedCanvas();
 
-  // calcula el màxim d’ample útil dins l’input i clampa el text a aquest ample (sense “…”)
   const clampToFitInput = useCallback(
     (text, i) => {
       const el = inputRefs.current[i];
@@ -191,15 +188,11 @@ export default function Wheel({
       const borderL = parseFloat(cs.borderLeftWidth) || 0;
       const borderR = parseFloat(cs.borderRightWidth) || 0;
 
-      // amplada interna disponible per al text
-      const maxPx =
-        el.clientWidth - padL - padR - borderL - borderR - 2; // petit marge
+      const maxPx = el.clientWidth - padL - padR - borderL - borderR - 2;
 
-      const clean = text.replace(/\s+/g, " "); // permet espais però normalitza
-      // mesura ràpida: si hi cap, tornem tal qual
+      const clean = text.replace(/\s+/g, " ");
       if (measureWithInputFont(inputCanvasCtx, el, clean) <= maxPx) return clean;
 
-      // cerca binària per tallar exactament on càpiga
       let lo = 0, hi = clean.length;
       while (lo < hi) {
         const mid = ((lo + hi + 1) / 2) | 0;
@@ -212,7 +205,6 @@ export default function Wheel({
     [inputCanvasCtx]
   );
 
-  // onChange d'input: impedeix escriure més del que cap
   const handleChange = useCallback(
     (i, raw) => {
       const next = clampToFitInput(raw, i);
@@ -221,12 +213,9 @@ export default function Wheel({
     [clampToFitInput]
   );
 
-  // Revalidar si canvia l’ample (resize de finestra) perquè no quedi text “sobrant”
   useEffect(() => {
     const onResize = () => {
-      setItems((prev) =>
-        prev.map((txt, i) => clampToFitInput(txt, i))
-      );
+      setItems((prev) => prev.map((txt, i) => clampToFitInput(txt, i)));
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -239,6 +228,25 @@ export default function Wheel({
       el.style.transform = `rotate(${angleAccumRef.current}deg)`;
     }
   }, [n]);
+
+  // >>> Inicialitzar perquè el punter apunti al centre d'"Option 1"
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
+    const slice0 = 360 / items.length;               // a l'inici
+    const initialAngle = -(0.5 * slice0);            // centre del primer segment
+
+    angleAccumRef.current = initialAngle;
+
+    const el = wheelRef.current;
+    if (el) {
+      el.style.transition = "none";
+      el.style.transform = `rotate(${initialAngle}deg)`;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const MAX_VISIBLE_ROWS = 3;
   const ROW_H = 44;
@@ -258,7 +266,8 @@ export default function Wheel({
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className="rounded-full shadow-md bg-white"
+          className="rounded-full"
+          style={{ shapeRendering: 'geometricPrecision', textRendering: 'optimizeLegibility' }}
         >
           {items.map((_, i) => {
             const a0 = i * slice - 90;
@@ -300,13 +309,13 @@ export default function Wheel({
           style={{ "--btn4-size": `${size * 0.28}px` }}
           aria-label="Spin the wheel"
         >
-          {spinning ? "SPIN…" : "SPIN"}
+          SPIN
         </button>
       </div>
 
       {/* Result */}
       <p className="mt-4 text-center text-gray-800">
-        Result: <span className="font-semibold">{resultIdx == null ? "—" : items[resultIdx]}</span>
+        Result: <span className="font-semibold">{spinning ? "..." : (resultIdx == null ? "—" : items[resultIdx])}</span>
       </p>
 
       {/* Sections editor */}
@@ -322,11 +331,7 @@ export default function Wheel({
             disabled={spinning || n >= maxItems}
             aria-disabled={spinning || n >= maxItems}
             title={
-              n >= maxItems
-                ? `Màxim ${maxItems} seccions`
-                : spinning
-                ? "Spinning..."
-                : "Afegir secció"
+              n >= maxItems ? `Màxim ${maxItems} seccions` : spinning ? "Spinning..." : "Afegir secció"
             }
             className="px-3 py-1 rounded bg-black text-white text-sm
                        disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none

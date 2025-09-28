@@ -1,11 +1,10 @@
-// src/components/Generator/Slot.jsx
 import { useEffect, useRef, useState } from 'react';
 import { generateRandomValues } from '../../utils/generateRNG';
 
-import machineBase   from '../../assets/slot/slot-machine4.png';
-import machineLeverActive from '../../assets/slot/slot-machine2.png'; 
-import machineLeverIdle   from '../../assets/slot/slot-machine3.png';
-import machineRails  from '../../assets/slot/slot-machine5.png';
+import machineBase        from '../../assets/slot/slot-machine4.png';
+import machineLeverActive from '../../assets/slot/slot-machine3.png';
+import machineLeverIdle   from '../../assets/slot/slot-machine2.png';
+import machineRails       from '../../assets/slot/slot-machine5.png';
 
 import sym7      from '../../assets/slot/slot-symbol1.png';
 import symCherry from '../../assets/slot/slot-symbol2.png';
@@ -19,42 +18,37 @@ const SYMBOLS = [
   { key: 'BAR',    img: symBar    }, // 3
 ];
 
-// A simple circular strip for each reel (you can customize per-reel if you want)
+// Tira (strip) per rodet — personalitzables
 const STRIP0 = [0, 1, 2, 3];
-const STRIP1 = [0, 2, 1, 3]; // example: slightly different order for variety
-const STRIP2 = [1, 0, 3, 2];
+const STRIP1 = [0, 2, 1, 3];
+const STRIP2 = [2, 0, 3, 1];
 const STRIPS = [STRIP0, STRIP1, STRIP2];
 
-function mod(n, m) { return ((n % m) + m) % m; }
+const mod = (n, m) => ((n % m) + m) % m;
 
-export default function Slot() {
-  // Each reel state is "top index" (integer 0..len-1) telling which symbol is at the top row
-  const [reelTop, setReelTop] = useState([0, 1, 2]); // starting positions
+export default function Slot({ onStart, onEnd, size = 320 }) {
+  const [reelTop, setReelTop] = useState([0, 1, 2]);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  // Animation bookkeeping
   const animRef = useRef(null);
   const startRef = useRef(0);
   const fromTopRef = useRef([0, 0, 0]);
   const targetTopRef = useRef([0, 0, 0]);
 
-  // Reel durations (stop one-by-one for drama)
-  const reelDurMs = useRef([1100, 1500, 1900]); // per-reel stop times (ms)
+  // timings de parada seqüencial
+  const reelDurMs = useRef([1100, 1500, 1900]);
 
-  // Speed parameters (tweak for feel)
-  const baseRevPerSec = 7;   // how many symbols per second at t=0
-  const minSpinRounds = 2;   // guaranteed full rounds before ease snaps
+  // paràmetres de “feel”
+  const baseRevPerSec = 7;
+  const minSpinRounds = 2;
 
-  // Easing: smoothstep 0..1
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-  // Build a visible 3×3 from reelTop & strips
+  // Deriva la graella 3×3 a partir dels tops
   const visibleGrid = (() => {
-    // For each column, take 3 consecutive items from its strip starting at reelTop[col]
     const col0 = [0, 1, 2].map(r => STRIPS[0][mod(reelTop[0] + r, STRIPS[0].length)]);
     const col1 = [0, 1, 2].map(r => STRIPS[1][mod(reelTop[1] + r, STRIPS[1].length)]);
     const col2 = [0, 1, 2].map(r => STRIPS[2][mod(reelTop[2] + r, STRIPS[2].length)]);
-    // Flatten to row-major [r0c0,r0c1,r0c2, r1c0,r1c1,r1c2, r2c0,r2c1,r2c2]
     return [
       col0[0], col1[0], col2[0],
       col0[1], col1[1], col2[1],
@@ -66,24 +60,21 @@ export default function Slot() {
     if (isSpinning) return;
 
     setIsSpinning(true);
+    onStart?.('...');
 
-    // 1) Choose *final* top-index for each reel with your RNG
-    //    We just need 3 numbers in [0..stripLen-1].
+    // 1) objectiu final per a cada rodet (0..len-1)
     const { selected } = await generateRandomValues('RNG1', Date.now(), 0, 3, 3);
     const targetTop = [selected[0] | 0, selected[1] | 0, selected[2] | 0];
     targetTopRef.current = targetTop;
 
-    // 2) Snapshot starts
+    // 2) snapshot i temps
     fromTopRef.current = reelTop.slice();
     startRef.current = performance.now();
 
-    // 3) Run RAF loop
+    // 3) animació
     cancelAnimationFrame(animRef.current);
     const loop = (now) => {
-      const t0 = startRef.current;
-      const dt = Math.max(0, now - t0);
-
-      // Compute new top indexes for each reel
+      const dt = Math.max(0, now - startRef.current);
       const next = [0, 0, 0];
 
       for (let i = 0; i < 3; i++) {
@@ -92,62 +83,70 @@ export default function Slot() {
         const raw = Math.min(1, dt / dur);
 
         if (raw < 1) {
-          // While spinning: do at least minSpinRounds full cycles, then ease to target
-          // total spins in symbols = baseSpeed * time (in seconds)
           const spinsSymbols = baseRevPerSec * (dt / 1000) * stripLen;
           const guaranteed = minSpinRounds * stripLen;
-
-          // Blend from fast spin towards the exact target using easing
           const eased = easeOut(raw);
-
           const startIdx = fromTopRef.current[i];
           const endIdx = targetTopRef.current[i];
-
-          // A: fast spinning component
           const fastDelta = Math.floor(guaranteed + spinsSymbols);
-
-          // B: easing towards final delta (shortest forward distance)
           const forwardDist = mod(endIdx - startIdx, stripLen);
           const easedDelta = Math.floor(forwardDist * eased);
-
           next[i] = mod(startIdx + fastDelta + easedDelta, stripLen);
         } else {
-          // Stopped: snap to target
           next[i] = targetTopRef.current[i];
         }
       }
 
       setReelTop(next);
 
-      // Keep looping until the last reel has reached its duration
       if (dt < Math.max(...reelDurMs.current)) {
         animRef.current = requestAnimationFrame(loop);
       } else {
-        // Final snap & done
-        setReelTop(targetTopRef.current.slice());
+        // final
+        const finalTop = targetTopRef.current.slice();
+        setReelTop(finalTop);
         setIsSpinning(false);
+
+        // Resultat fila central
+        const mids = [0, 1, 2].map((i) => {
+          const strip = STRIPS[i];
+          const top = finalTop[i];
+          return strip[(top + 1) % strip.length];
+        });
+
+        let resultText = 'Loss';
+        const same = (v) => mids.every((x) => x === v);
+        if (same(3)) resultText = 'Gum Win';       // BAR BAR BAR
+        else if (same(1)) resultText = 'Jackpot Win'; // 7 7 7
+        else if (same(0) || same(2)) resultText = 'Win'; // CHERRY×3 o BELL×3
+
+        onEnd?.(resultText, mids);
       }
     };
 
     animRef.current = requestAnimationFrame(loop);
   };
 
-  useEffect(() => {
-    return () => cancelAnimationFrame(animRef.current);
-  }, []);
+  useEffect(() => () => cancelAnimationFrame(animRef.current), []);
+
+  // escalar tot el bloc (amplada relativa)
+  const wrapperWidth = `${(size / 320) * 120}%`; // 120% base → escalar amb size
+  const translateX = '-10%';
 
   return (
     <div className="relative mx-auto w-full">
-      <div className="relative mx-auto overflow-hidden w-[120%]" aria-label="Slot machine">
-        {/* Rails background */}
+      <div className="relative mx-auto overflow-hidden" aria-label="Slot machine"
+           style={{ width: wrapperWidth }}>
+        {/* Rails */}
         <img
           src={machineRails}
           alt=""
           draggable={false}
-          className="absolute inset-0 z-10 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
+          className="absolute inset-0 z-10 pointer-events-none h-auto"
+          style={{ width: '100%', transform: `translateX(${translateX})` }}
         />
 
-        {/* Grid de símbols 3×3 (driven by reelTop animation) */}
+        {/* Grid 3×3 */}
         <div
           className="absolute z-20 grid place-items-center"
           style={{
@@ -173,28 +172,31 @@ export default function Slot() {
           ))}
         </div>
 
-        {/* Base */}
+        {/* Base amb outline (només slot-machine4.png) */}
         <img
           src={machineBase}
           alt=""
           draggable={false}
-          className="relative z-30 block pointer-events-none w-[120%] -translate-x-[10%] h-auto"
+          className="relative z-30 block pointer-events-none h-auto filter
+                     [filter:drop-shadow(2px_0_0_#000)_drop-shadow(-2px_0_0_#000)_drop-shadow(0_2px_0_#000)_drop-shadow(0_-2px_0_#000)]"
+          style={{ width: '100%', transform: `translateX(${translateX})` }}
         />
 
-        {/* Palanca */}
+        {/* Palanca: activa quan gira */}
         <img
-          src={isSpinning ? machineLeverIdle : machineLeverActive}
+          src={isSpinning ? machineLeverActive : machineLeverIdle}
           alt="Slot lever"
           draggable={false}
-          className="absolute inset-0 z-40 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
+          className="absolute inset-0 z-40 pointer-events-none h-auto"
+          style={{ width: '100%', transform: `translateX(${translateX})` }}
         />
 
         {/* Botó palanca (només quan NO gira) */}
         {!isSpinning && (
           <button
             onClick={pull}
-            className="button4 absolute inset-0 m-auto z-50 select-none !border-none 
-                      focus:outline-none focus:ring-0 cursor-pointer !text-[#b0cad2]"
+            className="button4 absolute inset-0 m-auto z-50 select-none !border-none
+                       focus:outline-none focus:ring-0 cursor-pointer !text-[#b0cad2]"
             style={{
               top: '27%',
               left: '69.8%',
@@ -214,7 +216,6 @@ export default function Slot() {
             Pull
           </button>
         )}
-
       </div>
     </div>
   );

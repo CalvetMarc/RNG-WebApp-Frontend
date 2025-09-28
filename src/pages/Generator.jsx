@@ -11,7 +11,7 @@ export default function Generator() {
   const [lastCoinResult, setLastCoinResult] = useState('heads'); // 'heads' | 'tails' | null
   const [lastDiceResult, setLastDiceResult] = useState(20);      // 1..20 | null
   const [diceCycles, setDiceCycles] = useState(1 + Math.floor(Math.random() * 4));
-  const [lastSlotResult, setLastSlotResult] = useState(null);    // 🔹 estat per al slot
+  const [lastSlotResult, setLastSlotResult] = useState('Jackpot Win');    // 🔹 estat per al slot
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -85,15 +85,16 @@ export default function Generator() {
 
             {/* Slot */}
             <div className="rounded-2xl bg-[#b0cad2] p-6 md:p-8 shadow-lg h-full flex flex-col">
-              <p className="text-center text-gray-500">Apreta la palanca per jugar.</p>
+              <p className="text-center text-gray-500">Pull the lever to play.</p>
               <div className="mt-6 flex items-center justify-center flex-1">
                 <Slot
                   size={320}
-                  onEnd={(result) => setLastSlotResult(result)}
+                  onStart={() => setLastSlotResult('...')}
+                  onEnd={(result /*, mids*/ ) => setLastSlotResult(result)}
                 />
               </div>
               <p className="mt-6 text-center text-gray-700">
-                Result: <span className="font-semibold">{lastSlotResult || '—'}</span>
+                Result: <span className="font-semibold">{lastSlotResult ?? '—'}</span>
               </p>
             </div>
 
