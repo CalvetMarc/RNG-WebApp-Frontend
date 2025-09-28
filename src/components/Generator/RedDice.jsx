@@ -22,6 +22,7 @@ export default function RedDice({
   size = 160,
   msPerFrame = 60,
   cycles = 2,
+  onStart,
   onEnd,               // (resultNumber: 1..20)
   disableClick = false // per si vols desactivar clic i controlar des de fora
 }) {
@@ -49,6 +50,10 @@ export default function RedDice({
     if (playingRef.current || disableClick) return;
     playingRef.current = true;
 
+    // 🔹 Notifica immediatament que comencem (per mostrar "...")
+    onStart && onStart();
+
+    // ja pots calcular el resultat en paral·lel
     const result = await pickResult();     // 1..20
     const totalSteps = Math.max(1, cycles) * FRAMES.length;
 

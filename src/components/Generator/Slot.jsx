@@ -35,7 +35,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
   const fromTopRef = useRef([0, 0, 0]);
   const targetTopRef = useRef([0, 0, 0]);
 
-  // timings de parada seqüencial
+  // timings base de parada seqüencial
   const reelDurMs = useRef([1100, 1500, 1900]);
 
   // paràmetres de “feel”
@@ -67,6 +67,23 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
     const targetTop = [selected[0] | 0, selected[1] | 0, selected[2] | 0];
     targetTopRef.current = targetTop;
 
+    // 🔹 Durades d'aquesta tirada (còpia local per no tocar les base)
+    const durMsThisSpin = [...reelDurMs.current];
+
+    // 🔹 Si col 1 i col 2 tindran un 7 al MIG, allarguem col 3 un 30–50%
+    {
+      const stripLen0 = STRIPS[0].length;
+      const stripLen1 = STRIPS[1].length;
+
+      const mid0 = STRIPS[0][(targetTop[0] + 1) % stripLen0]; // símbol mig col 1
+      const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1]; // símbol mig col 2
+
+      if (mid0 === 1 && mid1 === 1) { // 7 és index 1
+        const factor = 1.5 + Math.random() * 0.5; // [1.3, 1.5)
+        durMsThisSpin[2] = Math.round(durMsThisSpin[2] * factor);
+      }
+    }
+
     // 2) snapshot i temps
     fromTopRef.current = reelTop.slice();
     startRef.current = performance.now();
@@ -79,7 +96,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
       for (let i = 0; i < 3; i++) {
         const stripLen = STRIPS[i].length;
-        const dur = reelDurMs.current[i];
+        const dur = durMsThisSpin[i];          // 🔹 usa la durada local d'aquesta tirada
         const raw = Math.min(1, dt / dur);
 
         if (raw < 1) {
@@ -99,7 +116,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
       setReelTop(next);
 
-      if (dt < Math.max(...reelDurMs.current)) {
+      if (dt < Math.max(...durMsThisSpin)) {   // 🔹 condició amb durades locals
         animRef.current = requestAnimationFrame(loop);
       } else {
         // final
@@ -116,7 +133,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
         let resultText = 'Loss';
         const same = (v) => mids.every((x) => x === v);
-        if (same(3)) resultText = 'Gum Win';       // BAR BAR BAR
+        if (same(3)) resultText = 'Gum Win';          // BAR BAR BAR
         else if (same(1)) resultText = 'Jackpot Win'; // 7 7 7
         else if (same(0) || same(2)) resultText = 'Win'; // CHERRY×3 o BELL×3
 
@@ -196,7 +213,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
           <button
             onClick={pull}
             className="button4 absolute inset-0 m-auto z-50 select-none !border-none
-                       focus:outline-none focus:ring-0 cursor-pointer !text-[#b0cad2]"
+                       focus:outline-none focus:ring-0 cursor-pointer !text-[#cddde2]"
             style={{
               top: '27%',
               left: '69.8%',

@@ -37,6 +37,7 @@ export default function Generator() {
                   turnsMultiplier={2}
                   headIndex={0}
                   tailIndex={9}
+                  onStart={() => setLastCoinResult('...')}
                   onEnd={(side) => setLastCoinResult(side)}
                 />
               </div>
@@ -55,6 +56,7 @@ export default function Generator() {
                   size={200}
                   msPerFrame={50}
                   cycles={diceCycles}
+                  onStart={() => setLastDiceResult('...')}
                   onEnd={(n) => {
                     setLastDiceResult(n);
                     setDiceCycles(1 + Math.floor(Math.random() * 4));

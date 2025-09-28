@@ -12,6 +12,7 @@ export default function CoinSpriteFlipSheet({
   headIndex = 0,
   tailIndex = 9,
   onEnd,
+  onStart,
 }) {
   const [meta, setMeta] = useState({ w: 150, h: 0, frames: 18, stepFloat: 0 });
   const [frame, setFrame] = useState(headIndex);
@@ -36,10 +37,10 @@ export default function CoinSpriteFlipSheet({
     const { selected } = await generateRandomValues("RNG1", Date.now(), 0, 1, 1);
     return selected[0] === 0 ? "heads" : "tails";
   };
-  const pickDir = async () => {
-    const { selected } = await generateRandomValues("RNG1", Date.now() ^ 0x9e3779b9, 0, 1, 1);
-    return selected[0] === 0 ? +1 : -1; // +1 cw, -1 ccw
+  const pickDir = () => {
+    return Math.random() < 0.5 ? +1 : -1; // +1 = clockwise, -1 = counter-clockwise
   };
+  
 
   // 2 animacions = 1 volta ⇒ 1 animació = 180° ⇒ per frame = 180/FRAMES (amb signe)
   const degPerFrameBase = (dir, FRAMES) => dir * (180 / FRAMES);
@@ -58,6 +59,8 @@ export default function CoinSpriteFlipSheet({
   const play = async () => {
     if (playingRef.current || meta.frames <= 0) return;
     playingRef.current = true;
+
+    onStart && onStart();
 
     const side        = await pickSide();
     const endIndex    = side === "heads" ? headIndex : tailIndex;
