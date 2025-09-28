@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { generateRandomValues } from '../../utils/generateRNG';
 
 import machineBase   from '../../assets/slot/slot-machine4.png';
-import machineLever  from '../../assets/slot/slot-machine2.png';
+import machineLeverActive from '../../assets/slot/slot-machine2.png'; 
+import machineLeverIdle   from '../../assets/slot/slot-machine3.png';
 import machineRails  from '../../assets/slot/slot-machine5.png';
 
 import sym7      from '../../assets/slot/slot-symbol1.png';
@@ -182,36 +183,38 @@ export default function Slot() {
 
         {/* Palanca */}
         <img
-          src={machineLever}
+          src={isSpinning ? machineLeverIdle : machineLeverActive}
           alt="Slot lever"
           draggable={false}
           className="absolute inset-0 z-40 pointer-events-none w-[120%] -translate-x-[10%] h-auto"
         />
 
-        {/* Botó palanca */}
-        <button
-          onClick={pull}
-          disabled={isSpinning}
-          className="button4 absolute inset-0 m-auto z-50 select-none !border-none focus:outline-none focus:ring-0 disabled:opacity-60 disabled:cursor-not-allowed"
-          style={{
-            top: '27%',
-            left: '69.8%',
-            width: '14%',
-            height: '18%',
-            transform: 'translate(-50%, -50%)',
-            background: 'transparent',
-            cursor: 'pointer',
-            border: 'none',
-            outline: 'none',
-            boxShadow: 'none',
-            WebkitAppearance: 'none',
-            appearance: 'none',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-          aria-label="Pull the lever"
-        >
-          Pull
-        </button>
+        {/* Botó palanca (només quan NO gira) */}
+        {!isSpinning && (
+          <button
+            onClick={pull}
+            className="button4 absolute inset-0 m-auto z-50 select-none !border-none 
+                      focus:outline-none focus:ring-0 cursor-pointer !text-[#b0cad2]"
+            style={{
+              top: '27%',
+              left: '69.8%',
+              width: '14%',
+              height: '18%',
+              transform: 'translate(-50%, -50%)',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              boxShadow: 'none',
+              WebkitAppearance: 'none',
+              appearance: 'none',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+            aria-label="Pull the lever"
+          >
+            Pull
+          </button>
+        )}
+
       </div>
     </div>
   );
