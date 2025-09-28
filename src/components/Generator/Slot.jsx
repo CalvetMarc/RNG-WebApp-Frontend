@@ -70,16 +70,16 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
     // 🔹 Durades d'aquesta tirada (còpia local per no tocar les base)
     const durMsThisSpin = [...reelDurMs.current];
 
-    // 🔹 Si col 1 i col 2 tindran un 7 al MIG, allarguem col 3 un 30–50%
+    // 🔹 Si col 1 i col 2 tindran un 7 al MIG, allarguem col 3
     {
       const stripLen0 = STRIPS[0].length;
       const stripLen1 = STRIPS[1].length;
 
-      const mid0 = STRIPS[0][(targetTop[0] + 1) % stripLen0]; // símbol mig col 1
-      const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1]; // símbol mig col 2
+      const mid0 = STRIPS[0][(targetTop[0] + 1) % stripLen0];
+      const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1];
 
-      if (mid0 === 1 && mid1 === 1) { // 7 és index 1
-        const factor = 1.7 + Math.random() * 0.8; // [1.3, 1.5)
+      if (mid0 === 1 && mid1 === 1) {
+        const factor = 1.7 + Math.random() * 0.8;
         durMsThisSpin[2] = Math.round(durMsThisSpin[2] * factor);
       }
     }
@@ -96,7 +96,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
       for (let i = 0; i < 3; i++) {
         const stripLen = STRIPS[i].length;
-        const dur = durMsThisSpin[i];          // 🔹 usa la durada local d'aquesta tirada
+        const dur = durMsThisSpin[i];
         const raw = Math.min(1, dt / dur);
 
         if (raw < 1) {
@@ -116,15 +116,13 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
       setReelTop(next);
 
-      if (dt < Math.max(...durMsThisSpin)) {   // 🔹 condició amb durades locals
+      if (dt < Math.max(...durMsThisSpin)) {
         animRef.current = requestAnimationFrame(loop);
       } else {
-        // final
         const finalTop = targetTopRef.current.slice();
         setReelTop(finalTop);
         setIsSpinning(false);
 
-        // Resultat fila central
         const mids = [0, 1, 2].map((i) => {
           const strip = STRIPS[i];
           const top = finalTop[i];
@@ -133,9 +131,9 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
         let resultText = 'Loss';
         const same = (v) => mids.every((x) => x === v);
-        if (same(3)) resultText = 'Gum Win';          // BAR BAR BAR
-        else if (same(1)) resultText = 'Jackpot Win'; // 7 7 7
-        else if (same(0) || same(2)) resultText = 'Win'; // CHERRY×3 o BELL×3
+        if (same(3)) resultText = 'Gum Win';
+        else if (same(1)) resultText = 'Jackpot Win';
+        else if (same(0) || same(2)) resultText = 'Win';
 
         onEnd?.(resultText, mids);
       }
@@ -148,12 +146,19 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
   // escalar tot el bloc (amplada relativa)
   const wrapperWidth = `${(size / 320) * 120}%`; // 120% base → escalar amb size
-  const translateX = '-10%';
+  const translateX = '-12%';
 
   return (
-    <div className="relative mx-auto w-full">
-      <div className="relative mx-auto overflow-hidden" aria-label="Slot machine"
-           style={{ width: wrapperWidth }}>
+    // ⬇️⬇️⬇️ CANVIS: retalla qualsevol excés i evita pan lateral
+    <div
+      className="relative mx-auto w-full overflow-x-hidden"                // ⬅️ clip horitzontal
+      style={{ maxWidth: `${size}px`, overscrollBehaviorX: 'none' }}       // ⬅️ clampa i evita rebot
+    >
+      <div
+        className="relative mx-auto overflow-hidden"
+        aria-label="Slot machine"
+        style={{ width: wrapperWidth, touchAction: 'pan-y' }}              // ⬅️ només pan vertical
+      >
         {/* Rails */}
         <img
           src={machineRails}
@@ -168,7 +173,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
           className="absolute z-20 grid place-items-center"
           style={{
             top: '38.5%',
-            left: '40.6%',
+            left: '38.6%',
             width: '43%',
             height: '15%',
             transform: 'translate(-50%, -50%)',
@@ -189,7 +194,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
           ))}
         </div>
 
-        {/* Base amb outline (només slot-machine4.png) */}
+        {/* Base amb outline */}
         <img
           src={machineBase}
           alt=""
@@ -208,7 +213,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
           style={{ width: '100%', transform: `translateX(${translateX})` }}
         />
 
-        {/* Botó palanca (només quan NO gira) */}
+        {/* Botó palanca */}
         {!isSpinning && (
           <button
             onClick={pull}
@@ -216,7 +221,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
                        focus:outline-none focus:ring-0 cursor-pointer !text-[#cddde2]"
             style={{
               top: '27%',
-              left: '69.8%',
+              left: '66.1%',
               width: '14%',
               height: '18%',
               transform: 'translate(-50%, -50%)',
