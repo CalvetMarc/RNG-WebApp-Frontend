@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { generateRandomValues } from "../../utils/generateRNG";
+import { pcgBetween } from "../../utils/generateRNG";
 
 export default function CoinSpriteFlipSheet({
   sheetSrc,
-  msPerFrame = 60,          // valor base (només per fallback)
-  cycles = 2,               // animacions base (passades completes del sheet)
-  turnsMultiplier = 1,      // 2 animacions = 1 volta → multiplica animacions
-  minStepMs = 35,           // 👈 delay mínim per pas (ms)
-  maxStepMs = 60,           // 👈 delay màxim per pas (ms)
+  msPerFrame = 60,
+  cycles = 2,
+  turnsMultiplier = 1,
+  minStepMs = 35,
+  maxStepMs = 60,
   size = 200,
   headIndex = 0,
   tailIndex = 9,
@@ -33,23 +33,20 @@ export default function CoinSpriteFlipSheet({
     return () => clearTimeout(timerRef.current);
   }, [sheetSrc, headIndex]);
 
+  // Resultat "cara o creu" amb PCG32 (estat del joc)
   const pickSide = async () => {
-    const { selected } = await generateRandomValues("RNG1", Date.now(), 0, 1, 1);
-    return selected[0] === 0 ? "heads" : "tails";
+    const bit = await pcgBetween(0, 1, 'random'); // 0 o 1
+    return bit === 0 ? "heads" : "tails";
   };
-  const pickDir = () => {
-    return Math.random() < 0.5 ? +1 : -1; // +1 = clockwise, -1 = counter-clockwise
-  };
-  
 
-  // 2 animacions = 1 volta ⇒ 1 animació = 180° ⇒ per frame = 180/FRAMES (amb signe)
+  // Direcció només visual → Math.random()
+  const pickDir = () => (Math.random() < 0.5 ? +1 : -1);
+
   const degPerFrameBase = (dir, FRAMES) => dir * (180 / FRAMES);
 
-  // Evitem arribar a 0° abans d'hora: quantitzem a múltiple de 360° sense “passar-nos”
   const quantizeTurnsSafely = (totalDeg) =>
     totalDeg >= 0 ? Math.floor(totalDeg / 360) * 360 : Math.ceil(totalDeg / 360) * 360;
 
-  // delay aleatori per pas (clamp + fallback)
   const nextDelay = () => {
     const a = Math.max(1, Math.min(minStepMs, maxStepMs));
     const b = Math.max(1, Math.max(minStepMs, maxStepMs));
@@ -59,12 +56,11 @@ export default function CoinSpriteFlipSheet({
   const play = async () => {
     if (playingRef.current || meta.frames <= 0) return;
     playingRef.current = true;
-
     onStart && onStart();
 
     const side        = await pickSide();
     const endIndex    = side === "heads" ? headIndex : tailIndex;
-    const dir         = await pickDir();
+    const dir         = pickDir(); // 👈 visual
 
     const FRAMES      = meta.frames;
     const start       = frame;
@@ -84,7 +80,6 @@ export default function CoinSpriteFlipSheet({
     let accAngle = 0;
 
     const tick = () => {
-      // avançar 1 pas
       current = (current + 1) % FRAMES;
       setFrame(current);
 
@@ -93,14 +88,12 @@ export default function CoinSpriteFlipSheet({
 
       steps += 1;
       if (steps >= totalSteps) {
-        // final sincronitzat: frame final + angle 0°
         setFrame(endIndex);
         setAngle(0);
         playingRef.current = false;
         onEnd && onEnd(side);
         return;
       }
-      // planifica el següent pas amb delay aleatori
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(tick, nextDelay() || msPerFrame);
     };

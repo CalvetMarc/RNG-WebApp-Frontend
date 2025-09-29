@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { generateRandomValues } from "../../utils/generateRNG";
+import { pcgBetween } from "../../utils/generateRNG";
 import ScrollBox from "../ScrollBox";
 
 // Helpers geom
@@ -97,17 +97,11 @@ export default function Wheel({
   // ------- RNG + spin -------
   const pickIndex = async () => {
     try {
-      let seed;
-      try {
-        const buf = new Uint32Array(1);
-        crypto.getRandomValues(buf);
-        seed = buf[0] >>> 0;
-      } catch {
-        seed = (Date.now() ^ (performance.now() * 1000) ^ (Math.random() * 1e9)) >>> 0;
-      }
-      const { selected } = await generateRandomValues("RNG1", seed, 0, n - 1, 1);
-      return selected[0] | 0;
+      // PCG32 per al resultat (estat real del joc)
+      const idx = await pcgBetween(0, n - 1, 'random');
+      return idx | 0;
     } catch {
+      // fallback improbable
       return Math.floor(Math.random() * n);
     }
   };
@@ -118,6 +112,8 @@ export default function Wheel({
 
     const idx = await pickIndex();
     const centerAngle = (idx + 0.5) * slice;
+
+    // offset visual petit dins del segment → Math.random (cosmètic)
     const MARGIN = Math.min(6, slice * 0.2);
     const span = Math.max(0, slice / 2 - MARGIN);
     const offset = (Math.random() * 2 - 1) * span;
@@ -129,7 +125,7 @@ export default function Wheel({
     const delta = normalize(POINTER_DEG - desiredAngle - currentNorm);
 
     const MIN_TURNS = 2;
-    const extraRandomTurns = Math.floor(Math.random() * 12);
+    const extraRandomTurns = Math.floor(Math.random() * 12); // cosmètic
     const totalTurns = MIN_TURNS + extraRandomTurns;
 
     const totalDeg = totalTurns * 360 + delta;
@@ -229,14 +225,14 @@ export default function Wheel({
     }
   }, [n]);
 
-  // >>> Inicialitzar perquè el punter apunti al centre d'"Option 1"
+  // Inicialitzar perquè el punter apunti al centre d'"Option 1"
   const initializedRef = useRef(false);
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    const slice0 = 360 / items.length;               // a l'inici
-    const initialAngle = -(0.5 * slice0);            // centre del primer segment
+    const slice0 = 360 / items.length; // a l'inici
+    const initialAngle = -(0.5 * slice0); // centre del primer segment
 
     angleAccumRef.current = initialAngle;
 

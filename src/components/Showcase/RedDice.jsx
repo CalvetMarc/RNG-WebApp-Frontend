@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { generateRandomValues } from "../../utils/generateRNG";
+import { pcgBetween } from "../../utils/generateRNG";
 
 // Helper per construir rutes i números amb zero-padding
 const p = (n) => String(n).padStart(2, "0");
@@ -32,29 +32,31 @@ export default function RedDice({
 
   // Pre-càrrega d’imatges
   useEffect(() => {
-    [...FRAMES, ...RESULTS].forEach((u) => {
+    const imgs = [...FRAMES, ...RESULTS].map((u) => {
       const im = new Image();
       im.src = u;
+      return im;
     });
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      // opcional: neteja refs d’imatges si vols
+      imgs.length = 0;
+    };
   }, []);
 
-  // Escull resultat amb RNG1 (PCG32)
+  // Resultat amb PCG32: 1..20 (inclusiu)
   const pickResult = async () => {
-    // interval [1,20], 1 valor
-    const { selected } = await generateRandomValues("RNG1", Date.now(), 1, 20, 1);
-    return selected[0] | 0; // 1..20
+    const n = await pcgBetween(1, 20, 'random'); // seed aleatòria segura
+    return n | 0; // 1..20
   };
 
   const play = async () => {
     if (playingRef.current || disableClick) return;
     playingRef.current = true;
 
-    // 🔹 Notifica immediatament que comencem (per mostrar "...")
     onStart && onStart();
 
-    // ja pots calcular el resultat en paral·lel
-    const result = await pickResult();     // 1..20
+    const result = await pickResult(); // 1..20
     const totalSteps = Math.max(1, cycles) * FRAMES.length;
 
     let step = 0;
@@ -65,7 +67,7 @@ export default function RedDice({
 
       if (step >= totalSteps) {
         clearInterval(timerRef.current);
-        setSrc(RESULTS[result - 1]);       // index 0..19
+        setSrc(RESULTS[result - 1]); // index 0..19
         playingRef.current = false;
         onEnd && onEnd(result);
       }
@@ -93,5 +95,4 @@ export default function RedDice({
       </div>
     </button>
   );
-  
 }

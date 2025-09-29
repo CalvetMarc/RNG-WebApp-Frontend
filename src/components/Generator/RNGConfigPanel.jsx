@@ -1,6 +1,7 @@
+// components/Generator/RNGConfigPanel.jsx
 import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { FaCogs } from 'react-icons/fa';
-import { generateRandomValues } from '../../utils/generateRNG';
+import { pcgSeries } from '../../utils/generateRNG';
 import SingleSlider from '../UI/SingleSlider';
 import DualSlider from '../UI/DualSlider';
 
@@ -13,8 +14,6 @@ export default function RNGConfigPanel({
   setGeneratedValues,
   visualMode,
   setVisualMode,
-  selectedRngKey,
-  setSelectedRngKey,
 }) {
   const isArtMode   = visualMode === 'art';
   const rangeLimits = isArtMode ? { min: 0, max: 4294967295 } : { min: 0, max: 100 };
@@ -23,24 +22,20 @@ export default function RNGConfigPanel({
   const [min, setMin] = useState(DEFAULTS.performance.range.min);
   const [max, setMax] = useState(DEFAULTS.performance.range.max);
   const [quantity, setQuantity] = useState(DEFAULTS.performance.quantity);
-  const [seedType, setSeedType] = useState('random');
+  const [seedType, setSeedType] = useState('random'); // 'random' | 'fixed'
   const [customSeed, setCustomSeed] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 🔄 transició concurrent: manté "ocupat" mentre React pinta els gràfics
+  // concurrent transition
   const [isPending, startTransition] = useTransition();
   const busy = loading || isPending;
 
-  // 👉 ref per cridar rangeRef.current.setRange(a,b)
+  // ref per manipular el DualSlider sense remuntar
   const rangeRef = useRef(null);
-
-  useEffect(() => {
-    if (setSelectedRngKey) setSelectedRngKey('RNG1');
-  }, [setSelectedRngKey]);
 
   const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
-  // ✅ En canviar de mode:
+  // ✅ En canviar de mode visual, reseteja rang i quantitat dins dels límits
   useEffect(() => {
     const limits = isArtMode ? DEFAULTS.art.range : DEFAULTS.performance.range;
 
@@ -52,13 +47,10 @@ export default function RNGConfigPanel({
     setMax(nextMax);
     setQuantity(nextQty);
 
-    // Mou el DualSlider in-place sense remuntatge
     rangeRef.current?.setRange(nextMin, nextMax);
 
     setGeneratedValues({
       native: [],
-      all: { rng1: [], rng2: [], rng3: [] },
-      selectedKey: 'RNG1',
       seed: null,
       range: { min: nextMin, max: nextMax },
       quantity: nextQty,
@@ -67,34 +59,34 @@ export default function RNGConfigPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualMode]);
 
-  // cedir un frame
+  // cedir un frame per pintar "Generating…"
   const raf = () => new Promise(requestAnimationFrame);
 
   const generateValues = async () => {
     try {
-      setLoading(true);      // 1) marcar com a "loading"
-      await raf();           // 2) cedir un frame → es pinta "Generating…"
+      setLoading(true);
+      await raf();
 
+      // 👇 Calcula la seed al component per poder-la mostrar/guardar
       const seed =
         seedType === 'random'
-          ? crypto.getRandomValues(new Uint32Array(1))[0]
-          : (Number.parseInt(customSeed, 10) >>> 0) || 0;
+          ? (crypto.getRandomValues(new Uint32Array(1))[0] >>> 0)
+          : ((Number.parseInt(customSeed, 10) >>> 0) || 0);
 
-      const { rng1, rng2, rng3, selected } = await generateRandomValues(
-        'RNG1',
-        seed,
-        min,
-        max,
-        quantity,
+      // ✅ Forcem l'ús d'aquesta seed passant-la com a "fixed" a pcgSeries
+      // (així el valor que mostrem és EXACTAMENT el que s'ha emprat)
+      const values = await pcgSeries(
+        clamp(quantity, iterations.min, iterations.max),
+        clamp(Math.min(min, max), rangeLimits.min, rangeLimits.max),
+        clamp(Math.max(min, max), rangeLimits.min, rangeLimits.max),
+        'fixed',
+        String(seed),
         isArtMode
       );
 
-      // 3) el re-render pesat dels gràfics dins d'una transició
       startTransition(() => {
         setGeneratedValues({
-          native: selected,
-          all: { rng1, rng2, rng3 },
-          selectedKey: 'RNG1',
+          native: values,
           seed,
           range: { min, max },
           quantity,
@@ -104,7 +96,7 @@ export default function RNGConfigPanel({
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);     // 4) "busy" seguirà true mentre isPending sigui true
+      setLoading(false);
     }
   };
 
@@ -112,7 +104,7 @@ export default function RNGConfigPanel({
 
   return (
     <div className="bg-[#b0c2d2] rounded-xl shadow p-6 mt-8 max-w-3xl mx-auto">
-      {/* Títol */}
+      {/* Title */}
       <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center gap-2 justify-center text-center mb-10">
         <FaCogs className="text-gray-700 text-2xl mt-[3px]" />
         RNG Configuration
@@ -200,10 +192,10 @@ export default function RNGConfigPanel({
               placeholder="Enter seed"
               value={customSeed}
               onChange={(e) => setCustomSeed(e.target.value)}
-              disabled={seedType !== 'fixed'}
-              title={seedType === 'fixed' ? 'Editable (Fixed seed)' : 'Switch to Fixed to edit'}
+              disabled={!isFixed}
+              title={isFixed ? 'Editable (Fixed seed)' : 'Switch to Fixed to edit'}
               className={`px-2 py-1 text-sm h-8 rounded border w-full md:w-40 mr-8 focus:outline-none
-                ${seedType === 'fixed'
+                ${isFixed
                   ? 'bg-white text-gray-800 border-gray-600 focus:ring focus:ring-blue-300'
                   : 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed'
                 }`}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { generateRandomValues } from '../../utils/generateRNG';
+import { pcgSeries } from '../../utils/generateRNG';
 
 import machineBase        from '../../assets/slot/slot-machine4.png';
 import machineLeverActive from '../../assets/slot/slot-machine3.png';
@@ -42,7 +42,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
   const minSpinRounds = 2;
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 
-  // NEW: settle frames (evita parar just després d’un tick)
+  // settle frames (evita parar just després d’un tick)
   const settleRef = useRef([0, 0, 0]);      // frames consecutius al target per rodet
   const SETTLE_FRAMES = 1;                  // prova 1–2 per més robustesa
   const EPS_MS = 20;                        // petit marge extra de temps
@@ -64,20 +64,19 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
     setIsSpinning(true);
     onStart?.('...');
 
-    // objectiu final per a cada rodet (0..len-1)
-    const { selected } = await generateRandomValues('RNG1', Date.now(), 0, 3, 3);
-    const targetTop = [selected[0] | 0, selected[1] | 0, selected[2] | 0];
-    targetTopRef.current = targetTop;
+    // 🎲 Objectiu final per a cada rodet (0..3) amb PCG32
+    const targetTop = await pcgSeries(3, 0, 3, 'random'); // [a,b,c] ∈ [0..3]
+    targetTopRef.current = targetTop.map((v) => v | 0);
 
-    // durades d'aquesta tirada
+    // durades d'aquesta tirada (pots seguir modulant amb Math.random per “feel”)
     const durMsThisSpin = [...reelDurMs.current];
 
-    // si col 1 i 2 tindran un 7 al mig, allarga una mica col 3
+    // si col 1 i 2 tindran un 7 al mig, allarga una mica col 3 (efecte visual)
     {
       const stripLen0 = STRIPS[0].length;
       const stripLen1 = STRIPS[1].length;
-      const mid0 = STRIPS[0][(targetTop[0] + 1) % stripLen0];
-      const mid1 = STRIPS[1][(targetTop[1] + 1) % stripLen1];
+      const mid0 = STRIPS[0][(targetTopRef.current[0] + 1) % stripLen0];
+      const mid1 = STRIPS[1][(targetTopRef.current[1] + 1) % stripLen1];
       if (mid0 === 1 && mid1 === 1) {
         const factor = 1.7 + Math.random() * 0.8;
         durMsThisSpin[2] = Math.round(durMsThisSpin[2] * factor);
@@ -88,7 +87,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
     fromTopRef.current = reelTop.slice();
     startRef.current = performance.now();
 
-    // NEW: reset del settle
+    // reset del settle
     settleRef.current = [0, 0, 0];
 
     cancelAnimationFrame(animRef.current);
@@ -116,7 +115,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
         }
       }
 
-      // NEW: compta frames consecutius al target per rodet
+      // compta frames consecutius al target per rodet
       for (let i = 0; i < 3; i++) {
         if (next[i] === targetTopRef.current[i]) {
           settleRef.current[i] = Math.min(SETTLE_FRAMES, settleRef.current[i] + 1);
@@ -127,7 +126,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
       setReelTop(next);
 
-      // NEW: condició de final robusta
+      // condició de final robusta
       const allDoneTime = dt >= (Math.max(...durMsThisSpin) + EPS_MS);
       const allSettled  = settleRef.current.every(fr => fr >= SETTLE_FRAMES);
 
@@ -160,7 +159,7 @@ export default function Slot({ onStart, onEnd, size = 320 }) {
 
   useEffect(() => () => cancelAnimationFrame(animRef.current), []);
 
-  // escala/offset visuals (es queda igual que tens)
+  // escala/offset visuals (igual que abans)
   const wrapperWidth = `${(size / 320) * 120}%`;
   const translateX = '-12%';
 
