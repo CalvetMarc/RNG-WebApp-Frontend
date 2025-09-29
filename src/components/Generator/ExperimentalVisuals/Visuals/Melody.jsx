@@ -3,31 +3,31 @@ import * as Tone from 'tone';
 import SingleSlider from '../../../UI/SingleSlider';
 import MelodyPartitura from './MelodyPartitura';
 
-// 🆕 Detecta iOS (incloent iPadOS amb "MacIntel")
+// Detecta iOS (incloent iPadOS amb "MacIntel")
 function isIOS() {
   const ua = navigator.userAgent || navigator.vendor || window.opera;
   return /iPad|iPhone|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-export default function Melody({ valuesFreeRNG = [] }) {
+export default function Melody({ values = [] }) {
   const [evenDuration, setEvenDuration] = useState('8n');
-  const [oddDuration, setOddDuration] = useState('4n');
-  const [volume, setVolume] = useState(0);
+  const [oddDuration, setOddDuration]   = useState('4n');
+  const [volume, setVolume]             = useState(0);
   const [instrumentType, setInstrumentType] = useState('synth');
-  const [staffEvents, setStaffEvents] = useState([]);
-  const [loopEndTime, setLoopEndTime] = useState(0);
+  const [staffEvents, setStaffEvents]   = useState([]);
+  const [loopEndTime, setLoopEndTime]   = useState(0);
 
-  // 🆕 Banner d’ajuda per a iOS (visible d’entrada només en iOS)
+  // Banner d’ajuda per a iOS (visible d’entrada només en iOS)
   const [showIOSSilentHint, setShowIOSSilentHint] = useState(isIOS());
 
-  const evenRef = useRef(evenDuration);
-  const oddRef = useRef(oddDuration);
-  const synthRef = useRef(null);
-  const partRef = useRef(null);
+  const evenRef   = useRef(evenDuration);
+  const oddRef    = useRef(oddDuration);
+  const synthRef  = useRef(null);
+  const partRef   = useRef(null);
   const volumeRef = useRef(null);
 
   useEffect(() => { evenRef.current = evenDuration; }, [evenDuration]);
-  useEffect(() => { oddRef.current = oddDuration; }, [oddDuration]);
+  useEffect(() => { oddRef.current  = oddDuration;  }, [oddDuration]);
 
   useEffect(() => {
     Tone.start();
@@ -41,23 +41,27 @@ export default function Melody({ valuesFreeRNG = [] }) {
     };
   }, []);
 
+  // Canvi d’instrument
   useEffect(() => {
-    if (!valuesFreeRNG.length || !partRef.current) return;
+    if (!values.length || !partRef.current) return;
     const newSynth = createSynth();
     synthRef.current?.dispose();
     synthRef.current = newSynth;
-  }, [instrumentType]);
+  }, [instrumentType, values.length]);
 
+  // Canvi de dades
   useEffect(() => {
-    if (!valuesFreeRNG.length) return;
+    if (!values.length) return;
     restartSequence();
-  }, [valuesFreeRNG]);
+  }, [values]);
 
+  // Canvi de duracions
   useEffect(() => {
-    if (!valuesFreeRNG.length || !partRef.current) return;
+    if (!values.length || !partRef.current) return;
     updatePart();
-  }, [evenDuration, oddDuration]);
+  }, [evenDuration, oddDuration, values.length]);
 
+  // Canvi de volum
   useEffect(() => {
     if (volumeRef.current) {
       volumeRef.current.volume.value = Tone.gainToDb(volume / 10); // dB from 0.0–1.0
@@ -86,7 +90,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
     synthRef.current?.dispose();
     volumeRef.current?.dispose();
     synthRef.current = createSynth();
-    generateAndStartPart();
+    await generateAndStartPart();
     Tone.Transport.start('+0.1');
   };
 
@@ -98,12 +102,12 @@ export default function Melody({ valuesFreeRNG = [] }) {
     const scale = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'];
     let currentTime = 0;
 
-    const events = valuesFreeRNG.map((val) => {
-      const isEven = val % 2 === 0;
+    const events = values.map((val) => {
+      const isEven   = (val & 1) === 0;
       const duration = Tone.Time(isEven ? evenRef.current : oddRef.current).toSeconds();
-      const note = scale[val % scale.length];
-      const time = currentTime;
-      currentTime += duration;
+      const note     = scale[Math.abs(val) % scale.length];
+      const time     = currentTime;
+      currentTime   += duration;
       return [time, { note, duration, original: val }];
     });
 
@@ -146,7 +150,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
-      {/* 🆕 Banner només en iOS per avisar del mode silenci */}
+      {/* Banner només en iOS per avisar del mode silenci */}
       {showIOSSilentHint && (
         <div
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-white text-gray-900 shadow-lg rounded-xl px-4 py-3 text-sm w-[min(90vw,28rem)]"
@@ -166,19 +170,18 @@ export default function Melody({ valuesFreeRNG = [] }) {
         </div>
       )}
 
-
       <div className="flex flex-col sm:flex-row gap-6 justify-center items-center md:items-start mb-6 px-6">
-        {/* 🎚️ Slider de Volum */}
+        {/* Slider de Volum */}
         <div className="bg-[#b0cad2] px-8 py-3 rounded-lg shadow min-w-[270px]">
           <div className="flex items-center gap-4 translate-x-2.5">
-            <label className="text-sm text-gray-800  mt-5.5 font-semibold whitespace-nowrap">Volume</label>
-            <div className="flex-1 ">
+            <label className="text-sm text-gray-800 mt-5.5 font-semibold whitespace-nowrap">Volume</label>
+            <div className="flex-1">
               <SingleSlider min={0} max={10} value={volume} onChange={setVolume} barSizePercentage={80} />
             </div>
           </div>
         </div>
 
-        {/* 🕒 Durations */}
+        {/* Durations */}
         <div className="bg-[#b0cad2] px-6 py-4 rounded-lg shadow flex flex-wrap gap-6 items-center">
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-800">Even Numbers</label>
@@ -208,7 +211,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
           </div>
         </div>
 
-        {/* 🎛️ Instruments */}
+        {/* Instruments */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-5.5 rounded-lg shadow min-w-[270px] justify-center">
           <label className="flex items-center gap-2 text-sm text-gray-800">
             <input
@@ -217,9 +220,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
               value="synth"
               checked={instrumentType === 'synth'}
               onChange={() => setInstrumentType('synth')}
-              className="appearance-none w-3 h-3 rounded-full
-                 ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
-                 bg-[#94a3b8] checked:bg-gray-600"
+              className="appearance-none w-3 h-3 rounded-full ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800 bg-[#94a3b8] checked:bg-gray-600"
             />
             Default Synth
           </label>
@@ -230,9 +231,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
               value="futuristic"
               checked={instrumentType === 'futuristic'}
               onChange={() => setInstrumentType('futuristic')}
-              className="appearance-none w-3 h-3 rounded-full
-                 ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
-                 bg-[#94a3b8] checked:bg-gray-600"
+              className="appearance-none w-3 h-3 rounded-full ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800 bg-[#94a3b8] checked:bg-gray-600"
             />
             Futuristic
           </label>
@@ -243,9 +242,7 @@ export default function Melody({ valuesFreeRNG = [] }) {
               value="electric"
               checked={instrumentType === 'electric'}
               onChange={() => setInstrumentType('electric')}
-              className="appearance-none w-3 h-3 rounded-full
-                 ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
-                 bg-[#94a3b8] checked:bg-gray-600"
+              className="appearance-none w-3 h-3 rounded-full ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800 bg-[#94a3b8] checked:bg-gray-600"
             />
             Electric
           </label>

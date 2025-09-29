@@ -1,3 +1,4 @@
+// utils/generateRNG.js
 import { loadPcgWasm } from '../rngLib/pcg32_wasm_loader';
 
 let pcgPromise = null;
@@ -6,76 +7,65 @@ async function getPcg() {
   return pcgPromise;
 }
 
-// 🔹 Internal helper to establish the seed
-function getSeed(seedType = 'random', customSeed = '') {
-  if (seedType === 'random') {
-    return crypto.getRandomValues(new Uint32Array(1))[0] >>> 0;
-  }
-  return (Number.parseInt(customSeed, 10) >>> 0) || 0;
+function nextU32FromBetween(pcg) {
+  const hi = pcg.between(0, 0xFFFF) | 0; // 16 bits alts
+  const lo = pcg.between(0, 0xFFFF) | 0; // 16 bits baixos
+  return (((hi & 0xFFFF) << 16) | (lo & 0xFFFF)) >>> 0; // uint32
 }
 
-// 🔒 Internal function (not exported)
-async function generateRandomValues(
-  quantity = 1,
+// Decideix seed (intern)
+function resolveSeed(seedMode = 'random', seedInput = '') {
+  if (seedMode === 'fixed') {
+    const n = Number.parseInt(String(seedInput), 10);
+    return (Number.isFinite(n) ? n : 0) >>> 0;
+  }
+  try {
+    return (crypto.getRandomValues(new Uint32Array(1))[0]) >>> 0;
+  } catch {
+    return ((Date.now() ^ (performance.now() * 1000) ^ (Math.random() * 1e9)) >>> 0);
+  }
+}
+
+/** API pública → retorna múltiples valors (inclusiu). */
+export async function pcgSeries(
+  quantity = 1000,
   min = 0,
   max = 100,
-  seedType = 'random',
-  customSeed = '',
+  seedMode = 'random',   // 'random' | 'fixed'
+  seedInput = '',        // si 'fixed', s'usarà aquest valor
   useU32 = false
 ) {
-  const seedU32 = getSeed(seedType, customSeed);
-  if (min > max) [min, max] = [max, min];
-
   const pcg = await getPcg();
-  pcg.setSeed(seedU32);
 
-  const values = [];
+  // Normalitza el rang
+  if (min > max) { const t = min; min = max; max = t; }
+
+  const seed = resolveSeed(seedMode, seedInput);
+  pcg.setSeed(seed);
+
+  const values = new Array(quantity);
 
   if (useU32) {
+    // 🔁 sense betweenU32: fem servir 2×between(0..0xFFFF) per formar un uint32
     const minU = min >>> 0;
     const maxU = max >>> 0;
-    const spanU = (maxU - minU + 1) >>> 0;
-
+    const spanU = ((maxU - minU + 1) >>> 0) || 0x100000000; // evita 0 si [0, 2^32-1]
     for (let i = 0; i < quantity; i++) {
-      const u = pcg.nextU32();        // 0..2^32-1
-      const v = (u % spanU) + minU;   // mapejat a [minU,maxU]
-      values.push(v >>> 0);
+      const u = nextU32FromBetween(pcg);           // 0..2^32-1
+      values[i] = ((u % spanU) + minU) >>> 0;      // mapeig inclusiu
     }
   } else {
-    const minS = min | 0;
-    const maxS = max | 0;
+    const minS = min | 0, maxS = max | 0;
     for (let i = 0; i < quantity; i++) {
-      values.push(pcg.between(minS, maxS) | 0);
+      values[i] = (pcg.between(minS, maxS) | 0);
     }
   }
 
   return values;
 }
 
-/**
- * Public API → returns a single value [min,max] (inclusive).
- */
-export async function pcgBetween(
-  min,
-  max,
-  seedType = 'random',
-  customSeed = '',
-  useU32 = false
-) {
-  const values = await generateRandomValues(1, min, max, seedType, customSeed, useU32);
-  return values[0];
-}
-
-/**
- * Public API → returns multiple values.
- */
-export async function pcgSeries(
-  quantity,
-  min = 0,
-  max = 100,
-  seedType = 'random',
-  customSeed = '',
-  useU32 = false
-) {
-  return await generateRandomValues(quantity, min, max, seedType, customSeed, useU32);
+/** API pública → un sol valor [min,max] (inclusiu). */
+export async function pcgBetween(min, max, seedMode = 'random', seedInput = '', useU32 = false) {
+  const arr = await pcgSeries(1, min, max, seedMode, seedInput, useU32);
+  return arr[0];
 }

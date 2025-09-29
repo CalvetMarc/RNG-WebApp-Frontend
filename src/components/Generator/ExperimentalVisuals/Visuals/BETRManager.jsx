@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import BETRManual from './BitwiseExtractionToRGB/BETRManual';
 import BETRImage from './BitwiseExtractionToRGB/BETRImage';
 
-export default function BETRManager({ valuesFreeRNG = [] }) {
-  const [outputMode, setOutputMode] = useState('image');      // ← Per defecte 'image'
+export default function BETRManager({ values = [] }) {
+  const [outputMode, setOutputMode] = useState('image'); // 'image' | 'grid'
   const [grayscale, setGrayscale] = useState(false);
   const [chainMode, setChainMode] = useState(false);
 
@@ -11,7 +11,7 @@ export default function BETRManager({ valuesFreeRNG = [] }) {
     <div className="w-full flex flex-col mt-10 px-0 md:px-6 items-center">
       <div className="flex flex-col md:flex-row flex-wrap gap-6 mb-0 justify-center">
 
-        {/* Image Output primer */}
+        {/* Output mode */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-4.5 rounded-lg shadow min-w-[270px] justify-center">
           <label className="flex items-center gap-2 text-sm text-gray-800">
             <input
@@ -41,7 +41,7 @@ export default function BETRManager({ valuesFreeRNG = [] }) {
           </label>
         </div>
 
-        {/* La resta igual */}
+        {/* Color mode */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-4.5 rounded-lg shadow min-w-[270px] justify-center">
           <label className="flex items-center gap-2 text-sm text-gray-800">
             <input
@@ -71,6 +71,7 @@ export default function BETRManager({ valuesFreeRNG = [] }) {
           </label>
         </div>
 
+        {/* Chain mode */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-4.5 rounded-lg shadow min-w-[270px] justify-center">
           <label className="flex items-center gap-2 text-sm text-gray-800">
             <input
@@ -102,17 +103,9 @@ export default function BETRManager({ valuesFreeRNG = [] }) {
       </div>
 
       {outputMode === 'grid' ? (
-        <BETRManual
-          valuesFreeRNG={valuesFreeRNG}
-          grayscale={grayscale}
-          chainMode={chainMode}
-        />
+        <BETRManual values={values} grayscale={grayscale} chainMode={chainMode} />
       ) : (
-        <BETRImage
-          valuesFreeRNG={valuesFreeRNG}
-          grayscale={grayscale}
-          chainMode={chainMode}
-        />
+        <BETRImage  values={values} grayscale={grayscale} chainMode={chainMode} />
       )}
     </div>
   );

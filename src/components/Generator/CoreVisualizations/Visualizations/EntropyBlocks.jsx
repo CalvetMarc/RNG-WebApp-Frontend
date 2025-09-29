@@ -1,23 +1,27 @@
 import { useEffect, useState, useRef } from 'react';
 
-export default function EntropyBlocks({ valuesFreeRNG = [], blockSize = 100 }) {
+export default function EntropyBlocks({ values = [], blockSize = 100 }) {
   const [entropies, setEntropies] = useState([]);
   const [tooltip, setTooltip] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (!valuesFreeRNG || valuesFreeRNG.length === 0) return;
+    if (!Array.isArray(values) || values.length === 0 || blockSize <= 0) {
+      setEntropies([]);
+      return;
+    }
 
     const computeEntropy = (block) => {
       const freqMap = {};
-      block.forEach(val => {
-        freqMap[val] = (freqMap[val] || 0) + 1;
-      });
+      for (let i = 0; i < block.length; i++) {
+        const v = block[i];
+        freqMap[v] = (freqMap[v] || 0) + 1;
+      }
 
       const total = block.length;
       let entropy = 0;
-      for (let key in freqMap) {
-        const p = freqMap[key] / total;
+      for (const k in freqMap) {
+        const p = freqMap[k] / total;
         entropy -= p * Math.log2(p);
       }
 
@@ -28,22 +32,24 @@ export default function EntropyBlocks({ valuesFreeRNG = [], blockSize = 100 }) {
     };
 
     const blocks = [];
-    for (let i = 0; i < valuesFreeRNG.length; i += blockSize) {
-      const block = valuesFreeRNG.slice(i, i + blockSize);
+    for (let i = 0; i < values.length; i += blockSize) {
+      const block = values.slice(i, i + blockSize);
       if (block.length === blockSize) {
         blocks.push(computeEntropy(block));
       }
     }
 
     setEntropies(blocks);
-  }, [valuesFreeRNG, blockSize]);
+  }, [values, blockSize]);
+
+  const maxH = Math.log2(Math.max(2, blockSize)); // evitar log2(1)→0 i divisions rares
 
   return (
     <div className="w-full flex justify-center">
       <div className="w-[100%] md:w-[90%] max-w-6xl px-4 bg-[#b0cad2] rounded-lg pt-10 md:pt-18 pb-11">
         <div ref={containerRef} className="grid grid-cols-10 gap-1 relative">
           {entropies.map((block, index) => {
-            const entropyRatio = block.entropy / Math.log2(blockSize);
+            const entropyRatio = block.entropy / maxH;
             const hue = entropyRatio * 220;
             const lightness = 60;
 
@@ -95,7 +101,7 @@ export default function EntropyBlocks({ valuesFreeRNG = [], blockSize = 100 }) {
         </div>
 
         <h2 className="text-center mt-2 mb-0 md:mt-5 md:mb-3 text-base text-gray-800 font-medium translate-y-4">
-          Entropy per Block (H from 0 to {Math.log2(blockSize).toFixed(2)})
+          Entropy per Block (H from 0 to {maxH.toFixed(2)})
         </h2>
       </div>
     </div>

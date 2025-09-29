@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import VTCIImage from './ValueToColorInterpolation/VTCIImage';
 
-export default function VTCIManager({ valuesFreeRNG = [] }) {
+export default function VTCIManager({ values = [] }) {
   const [colorMap, setColorMap] = useState('hsl');
   const [interpolationMode, setInterpolationMode] = useState('fixed');
   const [curveMode, setCurveMode] = useState('linear');
@@ -10,7 +10,6 @@ export default function VTCIManager({ valuesFreeRNG = [] }) {
     <div className="w-full flex flex-col mt-10 px-6 items-center">
       {/* Contenidor centrat dels selectors */}
       <div className="flex flex-col md:flex-row flex-wrap gap-6 mb-0 justify-center">
-
         {/* Selector de colormap */}
         <div className="flex gap-3 bg-[#b0cad2] px-6 py-3 rounded-lg shadow min-w-[270px] items-center justify-center">
           <label className="text-sm text-gray-800 font-medium">Color Map:</label>
@@ -32,7 +31,7 @@ export default function VTCIManager({ valuesFreeRNG = [] }) {
           </select>
         </div>
 
-        {/* Selector de velocitat d'interpolació */}
+        {/* Velocitat d'interpolació */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-3 rounded-lg shadow min-w-[270px] justify-center">
           {['fixed', 'mid', 'fast'].map((mode) => (
             <label key={mode} className="flex items-center gap-2 text-sm text-gray-800">
@@ -42,16 +41,14 @@ export default function VTCIManager({ valuesFreeRNG = [] }) {
                 value={mode}
                 checked={interpolationMode === mode}
                 onChange={() => setInterpolationMode(mode)}
-                className="appearance-none w-3 h-3 rounded-full
-                           ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
-                           bg-[#94a3b8] checked:bg-gray-600"
+                className="appearance-none w-3 h-3 rounded-full ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800 bg-[#94a3b8] checked:bg-gray-600"
               />
               {mode.charAt(0).toUpperCase() + mode.slice(1)}
             </label>
           ))}
         </div>
 
-        {/* Selector de corba */}
+        {/* Corba */}
         <div className="flex gap-6 bg-[#b0cad2] px-6 py-3 rounded-lg shadow min-w-[270px] justify-center">
           {['linear', 'exp', 'log'].map((curve) => (
             <label key={curve} className="flex items-center gap-2 text-sm text-gray-800">
@@ -61,9 +58,7 @@ export default function VTCIManager({ valuesFreeRNG = [] }) {
                 value={curve}
                 checked={curveMode === curve}
                 onChange={() => setCurveMode(curve)}
-                className="appearance-none w-3 h-3 rounded-full
-                           ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800
-                           bg-[#94a3b8] checked:bg-gray-600"
+                className="appearance-none w-3 h-3 rounded-full ring-1 ring-gray-800 checked:ring-2 checked:ring-gray-800 bg-[#94a3b8] checked:bg-gray-600"
               />
               {curve.charAt(0).toUpperCase() + curve.slice(1)}
             </label>
@@ -73,7 +68,7 @@ export default function VTCIManager({ valuesFreeRNG = [] }) {
 
       {/* Renderització */}
       <VTCIImage
-        valuesFreeRNG={valuesFreeRNG}
+        values={values}
         colorMap={colorMap}
         interpolationMode={interpolationMode}
         curveMode={curveMode}

@@ -19,25 +19,27 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function SequenceGraph({ valuesFreeRNG = [] }) {
+export default function SequenceGraph({ values = [] }) {
   const [graphData, setGraphData] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Construeix les dades per al gràfic
   useEffect(() => {
-    const data = valuesFreeRNG.map((val, index) => ({
+    const data = (Array.isArray(values) ? values : []).map((val, index) => ({
       index,
       value: typeof val === 'number' ? val : 0,
     }));
     setGraphData(data);
-  }, [valuesFreeRNG]);
+  }, [values]);
 
+  // Responsive check
   useEffect(() => {
     const update = () => {
       if (typeof window !== 'undefined') {
         setIsMobile(window.innerWidth < 768); // breakpoint "md"
       }
     };
-    update(); // comprova al muntatge
+    update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
@@ -49,7 +51,7 @@ export default function SequenceGraph({ valuesFreeRNG = [] }) {
   const chartHeight = isMobile ? '200px' : '350px';
 
   return (
-    <div className="w-full  flex justify-center">
+    <div className="w-full flex justify-center">
       <div className="w-[100%] md:w-[90%] max-w-6xl bg-[#b0cad2] rounded-lg pt-6 pb-6">
         <div style={{ height: chartHeight }}>
           <ResponsiveContainer width="100%" height="100%">

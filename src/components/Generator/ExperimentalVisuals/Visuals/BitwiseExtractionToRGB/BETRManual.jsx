@@ -1,23 +1,20 @@
 import React, { useState, useRef } from 'react';
 
-export default function BETRManual({ valuesFreeRNG = [], grayscale = false, chainMode = false }) {
+export default function BETRManual({ values = [], grayscale = false, chainMode = false }) {
   const [hovered, setHovered] = useState({ show: false, value: null, index: null, x: 0, y: 0 });
   const containerRef = useRef(null);
 
-  if (!valuesFreeRNG.length) return null;
+  if (!Array.isArray(values) || values.length === 0) return null;
 
   const pixelValues = [];
 
   if (chainMode) {
-    // 🔗 FULL CHAIN: convertim tot a bytes consecutius
+    // FULL CHAIN: converteix cada uint32 a 4 bytes i concatena; cada 3 bytes → 1 píxel
     const allBytes = [];
-    for (const num of valuesFreeRNG) {
-      allBytes.push((num >> 24) & 0xff);
-      allBytes.push((num >> 16) & 0xff);
-      allBytes.push((num >> 8) & 0xff);
-      allBytes.push(num & 0xff);
+    for (let i = 0; i < values.length; i++) {
+      const n = values[i] >>> 0; // assegura uint32
+      allBytes.push((n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff);
     }
-    // Convertim cada 3 bytes en 1 píxel
     for (let i = 0; i < allBytes.length; i += 3) {
       const r = allBytes[i] ?? 0;
       const g = allBytes[i + 1] ?? 0;
@@ -30,11 +27,12 @@ export default function BETRManual({ valuesFreeRNG = [], grayscale = false, chai
       }
     }
   } else {
-    // 🧩 EACH VALUE: cada enter → 3 bytes directes
-    for (const num of valuesFreeRNG) {
-      const r = (num >> 16) & 0xff;
-      const g = (num >> 8) & 0xff;
-      const b = num & 0xff;
+    // EACH VALUE: cada enter → 3 bytes RGB directes
+    for (let i = 0; i < values.length; i++) {
+      const n = values[i] >>> 0; // assegura uint32
+      const r = (n >>> 16) & 0xff;
+      const g = (n >>> 8) & 0xff;
+      const b = n & 0xff;
       if (grayscale) {
         const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         pixelValues.push({ gray });
@@ -48,16 +46,12 @@ export default function BETRManual({ valuesFreeRNG = [], grayscale = false, chai
   const columns = Math.ceil(Math.sqrt(total));
 
   return (
-    // 🔧 Anchor per al tooltip (positioning correcte)
     <div ref={containerRef} className="relative w-full mt-8">
       {/* Full-bleed a mòbil; compacte a md+ */}
       <div
         className="
           bg-[#b0cad2]
-          w-screen
-          mx-[calc(50%-50vw)]
-          rounded-none
-          py-0 px-0
+          w-screen mx-[calc(50%-50vw)] rounded-none py-0 px-0
           md:w-[90%] md:mx-auto md:rounded-lg md:py-6 md:px-4
         "
       >
@@ -71,7 +65,6 @@ export default function BETRManual({ valuesFreeRNG = [], grayscale = false, chai
               const color = grayscale
                 ? `rgb(${val.gray}, ${val.gray}, ${val.gray})`
                 : `rgb(${val.r}, ${val.g}, ${val.b})`;
-
               const valueLabel = grayscale
                 ? `${val.gray}`
                 : `(${val.r}, ${val.g}, ${val.b})`;
@@ -108,13 +101,13 @@ export default function BETRManual({ valuesFreeRNG = [], grayscale = false, chai
           </div>
         </div>
 
-        {/* TÍTOL */}
+        {/* Títol */}
         <h2 className="text-center mt-4 text-base text-gray-800 font-medium pt-3 md:pt-0 pb-5 md:pb-0">
           Bitwise Extraction to Color
         </h2>
       </div>
 
-      {/* TOOLTIP (mateix estil que l'altre) */}
+      {/* Tooltip */}
       {hovered.show && (
         <div
           className="absolute z-50 bg-white border border-black text-black shadow-lg text-xs rounded px-3 py-2 pointer-events-none"

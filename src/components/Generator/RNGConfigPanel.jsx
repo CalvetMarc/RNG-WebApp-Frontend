@@ -26,16 +26,13 @@ export default function RNGConfigPanel({
   const [customSeed, setCustomSeed] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // concurrent transition
   const [isPending, startTransition] = useTransition();
   const busy = loading || isPending;
 
-  // ref per manipular el DualSlider sense remuntar
   const rangeRef = useRef(null);
-
   const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
-  // ✅ En canviar de mode visual, reseteja rang i quantitat dins dels límits
+  // Reset quan canvia el mode visual
   useEffect(() => {
     const limits = isArtMode ? DEFAULTS.art.range : DEFAULTS.performance.range;
 
@@ -47,10 +44,10 @@ export default function RNGConfigPanel({
     setMax(nextMax);
     setQuantity(nextQty);
 
-    rangeRef.current?.setRange(nextMin, nextMax);
+    rangeRef.current?.setRange?.(nextMin, nextMax);
 
     setGeneratedValues({
-      native: [],
+      values: [],
       seed: null,
       range: { min: nextMin, max: nextMax },
       quantity: nextQty,
@@ -59,7 +56,6 @@ export default function RNGConfigPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualMode]);
 
-  // cedir un frame per pintar "Generating…"
   const raf = () => new Promise(requestAnimationFrame);
 
   const generateValues = async () => {
@@ -67,26 +63,23 @@ export default function RNGConfigPanel({
       setLoading(true);
       await raf();
 
-      // 👇 Calcula la seed al component per poder-la mostrar/guardar
       const seed =
         seedType === 'random'
           ? (crypto.getRandomValues(new Uint32Array(1))[0] >>> 0)
           : ((Number.parseInt(customSeed, 10) >>> 0) || 0);
 
-      // ✅ Forcem l'ús d'aquesta seed passant-la com a "fixed" a pcgSeries
-      // (així el valor que mostrem és EXACTAMENT el que s'ha emprat)
       const values = await pcgSeries(
         clamp(quantity, iterations.min, iterations.max),
         clamp(Math.min(min, max), rangeLimits.min, rangeLimits.max),
         clamp(Math.max(min, max), rangeLimits.min, rangeLimits.max),
-        'fixed',
+        'fixed',            // fem servir la seed calculada
         String(seed),
         isArtMode
       );
 
       startTransition(() => {
         setGeneratedValues({
-          native: values,
+          values,
           seed,
           range: { min, max },
           quantity,
