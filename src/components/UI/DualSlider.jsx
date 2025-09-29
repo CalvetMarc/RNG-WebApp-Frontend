@@ -1,14 +1,22 @@
 import React, {
   useState,
-  useRef,
   useEffect,
-  useLayoutEffect,
   forwardRef,
   useImperativeHandle,
-} from 'react';
+  useMemo,
+} from "react";
+import * as Slider from "@radix-ui/react-slider";
 
 const DualSlider = forwardRef(function DualSlider(
-  { minLimit, maxLimit, minValue, maxValue, onChange },
+  {
+    minLimit,
+    maxLimit,
+    minValue,
+    maxValue,
+    onChange,
+    barSizePercentage = 96.5, // opcional, igual que al teu SingleSlider
+    minGap = 1,               // separació mínima entre thumbs en unitats reals
+  },
   ref
 ) {
   const clampReal = (v) => Math.min(Math.max(v, minLimit), maxLimit);
@@ -16,20 +24,31 @@ const DualSlider = forwardRef(function DualSlider(
   const toReal = (internal) => clampReal(internal + minLimit);
 
   const INTERNAL_MIN = 0;
-  const INTERNAL_MAX = Math.max(1, maxLimit - minLimit); // evita div/0
+  const INTERNAL_MAX = useMemo(
+    () => Math.max(minGap, maxLimit - minLimit),
+    [minLimit, maxLimit, minGap]
+  );
 
+  // Estat intern (Radix treballa amb arrays de valors)
   const [internalMin, setInternalMin] = useState(toInternal(minValue));
   const [internalMax, setInternalMax] = useState(toInternal(maxValue));
 
+  // Inputs (text) visibles
   const [minInputVal, setMinInputVal] = useState(String(clampReal(minValue)));
   const [maxInputVal, setMaxInputVal] = useState(String(clampReal(maxValue)));
 
-  const [minThumbLeft, setMinThumbLeft] = useState(0);
-  const [maxThumbLeft, setMaxThumbLeft] = useState(0);
+  // Sync inicial/extern
+  useEffect(() => {
+    setInternalMin(toInternal(minValue));
+    setMinInputVal(String(clampReal(minValue)));
+  }, [minValue, minLimit, maxLimit]);
 
-  const rangeRef = useRef(null);
+  useEffect(() => {
+    setInternalMax(toInternal(maxValue));
+    setMaxInputVal(String(clampReal(maxValue)));
+  }, [maxValue, minLimit, maxLimit]);
 
-  // 🔁 Notifica pare + inputs quan canvia l’estat intern
+  // Notifica cap amunt quan canvia l’interval intern
   useEffect(() => {
     const rMin = toReal(internalMin);
     const rMax = toReal(internalMax);
@@ -39,25 +58,7 @@ const DualSlider = forwardRef(function DualSlider(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [internalMin, internalMax]);
 
-  // 🎯 Reposiciona thumbs segons ample del track
-  useLayoutEffect(() => {
-    const trackWidth = rangeRef.current?.offsetWidth || 0;
-    const thumbWidth = 24;
-    const usable = Math.max(0, trackWidth - thumbWidth);
-    setMinThumbLeft((internalMin / INTERNAL_MAX) * usable + thumbWidth / 2);
-    setMaxThumbLeft((internalMax / INTERNAL_MAX) * usable + thumbWidth / 2);
-  }, [internalMin, internalMax, INTERNAL_MAX]);
-
-  // 🔄 Sync amb canvis de props (per si el pare canvia minValue/maxValue)
-  useEffect(() => {
-    setInternalMin(toInternal(minValue));
-  }, [minValue, minLimit, maxLimit]);
-
-  useEffect(() => {
-    setInternalMax(toInternal(maxValue));
-  }, [maxValue, minLimit, maxLimit]);
-
-  // 🧰 API imperativa per moure el slider des del pare
+  // API imperativa
   useImperativeHandle(ref, () => ({
     setRange(realMin, realMax) {
       const a = clampReal(realMin);
@@ -71,89 +72,119 @@ const DualSlider = forwardRef(function DualSlider(
     },
   }));
 
+  // Gestor Radix: evita que es creuin i respecta minGap
+  const handleValueChange = ([a, b]) => {
+    if (b - a < minGap) {
+      const mid = (a + b) / 2;
+      a = Math.round(mid - minGap / 2);
+      b = Math.round(mid + minGap / 2);
+    }
+    a = Math.max(INTERNAL_MIN, Math.min(a, INTERNAL_MAX - minGap));
+    b = Math.min(INTERNAL_MAX, Math.max(b, INTERNAL_MIN + minGap));
+    setInternalMin(a);
+    setInternalMax(b);
+  };
+
+  // Inputs manuals
   const handleMinInputChange = (e) => {
-    const val = Number(e.target.value);
-    setMinInputVal(e.target.value);
-    if (!Number.isNaN(val)) {
-      const v = clampReal(val);
-      if (v < toReal(internalMax)) setInternalMin(toInternal(v));
+    const raw = e.target.value;
+    setMinInputVal(raw);
+    const n = Number(raw);
+    if (!Number.isNaN(n)) {
+      const v = clampReal(n);
+      if (v <= toReal(internalMax - minGap)) setInternalMin(toInternal(v));
     }
   };
 
   const handleMaxInputChange = (e) => {
-    const val = Number(e.target.value);
-    setMaxInputVal(e.target.value);
-    if (!Number.isNaN(val)) {
-      const v = clampReal(val);
-      if (v > toReal(internalMin)) setInternalMax(toInternal(v));
+    const raw = e.target.value;
+    setMaxInputVal(raw);
+    const n = Number(raw);
+    if (!Number.isNaN(n)) {
+      const v = clampReal(n);
+      if (v >= toReal(internalMin + minGap)) setInternalMax(toInternal(v));
     }
   };
+
+  // 🔒 Evita que el clic/touch/tecles als inputs moguin el slider
+  const stop = (e) => e.stopPropagation();
 
   return (
     <div className="relative w-full mt-6">
       <div className="flex items-center justify-between w-full">
-        <div className="text-xs font-semibold text-[#1e2a38] pr-2 pb-0.5">{minLimit}</div>
+        <div className="text-xs font-semibold text-[#1e2a38] pr-2 pb-0.5">
+          {minLimit}
+        </div>
 
         <div className="relative flex-grow -translate-x-2.5">
-          {/* Inputs centrats sobre cada thumb */}
-          <input
-            type="text"
-            value={minInputVal}
-            onChange={handleMinInputChange}
-            className="absolute w-[48px] text-sm font-bold text-center text-[#1e2a38] bg-gray-100 border border-gray-300 rounded"
-            style={{ transform: 'translateX(-50%)', left: `${minThumbLeft}px`, top: '-37px' }}
-          />
-          <input
-            type="text"
-            value={maxInputVal}
-            onChange={handleMaxInputChange}
-            className="absolute w-[48px] text-sm font-bold text-center text-[#1e2a38] bg-gray-100 border border-gray-300 rounded"
-            style={{ transform: 'translateX(-50%)', left: `${maxThumbLeft}px`, top: '23px' }}
-          />
+          <div className="mx-auto" style={{ width: `${barSizePercentage}%` }}>
+            <Slider.Root
+              className="relative flex items-center select-none touch-none h-10"
+              min={INTERNAL_MIN}
+              max={INTERNAL_MAX}
+              step={1}
+              value={[internalMin, internalMax]}
+              onValueChange={handleValueChange}
+            >
+              {/* Pista */}
+              <Slider.Track className="relative h-2 w-full rounded bg-[#94a3b8] overflow-hidden">
+                <Slider.Range className="absolute h-full bg-gray-500" />
+              </Slider.Track>
 
-          {/* Sliders */}
-          <input
-            ref={rangeRef}
-            type="range"
-            min={INTERNAL_MIN}
-            max={INTERNAL_MAX}
-            value={internalMin}
-            step={1}
-            onChange={(e) => {
-              const v = Math.min(Number(e.target.value), internalMax - 1);
-              setInternalMin(v);
-            }}
-            className="absolute appearance-none w-full h-2 bg-transparent z-50 pointer-events-auto thumb-min"
-            style={{ top: '-6px' }}
-          />
+              {/* Thumb MIN */}
+              <Slider.Thumb
+                className="block h-4 w-4 rounded-full bg-[#1e2a38]"
+                aria-label="Minimum value"
+              >
+                {/* Input sobre el polsador (més separat) */}
+                <input
+                  type="text"
+                  value={minInputVal}
+                  onChange={handleMinInputChange}
+                  onPointerDown={stop}
+                  onMouseDown={stop}
+                  onTouchStart={stop}
+                  onClick={stop}
+                  onPointerUp={stop}
+                  onMouseUp={stop}
+                  onTouchEnd={stop}
+                  onKeyDown={stop}
+                  className="absolute w-[56px] -top-7 left-1/2 -translate-x-1/2
+                             text-sm font-bold text-center text-[#1e2a38]
+                             bg-gray-100 border border-gray-300 rounded"
+                />
+              </Slider.Thumb>
 
-          <input
-            type="range"
-            min={INTERNAL_MIN}
-            max={INTERNAL_MAX}
-            value={internalMax}
-            step={1}
-            onChange={(e) => {
-              const v = Math.max(Number(e.target.value), internalMin + 1);
-              setInternalMax(v);
-            }}
-            className="absolute appearance-none w-full h-2 bg-transparent z-40 pointer-events-auto thumb-max"
-            style={{ top: '6px' }}
-          />
-
-          {/* Barra visual */}
-          <div className="relative w-[96.5%] mx-auto h-2 bg-[#94a3b8] rounded overflow-hidden mt-0">
-            <div
-              className="absolute h-full bg-gray-600"
-              style={{
-                left: `${(internalMin / INTERNAL_MAX) * 100}%`,
-                width: `${((internalMax - internalMin) / INTERNAL_MAX) * 100}%`,
-              }}
-            />
+              {/* Thumb MAX */}
+              <Slider.Thumb
+                className="block h-4 w-4 rounded-full bg-[#1e2a38]"
+                aria-label="Maximum value"
+              >
+                {/* Input sota el polsador (més separat) */}
+                <input
+                  type="text"
+                  value={maxInputVal}
+                  onChange={handleMaxInputChange}
+                  onPointerDown={stop}
+                  onMouseDown={stop}
+                  onTouchStart={stop}
+                  onClick={stop}
+                  onPointerUp={stop}
+                  onMouseUp={stop}
+                  onTouchEnd={stop}
+                  onKeyDown={stop}
+                  className="absolute w-[56px] top-5.5 left-1/2 -translate-x-1/2
+                             text-sm font-bold text-center text-[#1e2a38]
+                             bg-gray-100 border border-gray-300 rounded"
+                />
+              </Slider.Thumb>
+            </Slider.Root>
           </div>
         </div>
 
-        <div className="text-xs font-semibold text-[#1e2a38] pr-3.5 pb-0.75 -translate-x-2.5">{maxLimit}</div>
+        <div className="text-xs font-semibold text-[#1e2a38] pr-3.5 pb-0.75 -translate-x-2.5">
+          {maxLimit}
+        </div>
       </div>
     </div>
   );

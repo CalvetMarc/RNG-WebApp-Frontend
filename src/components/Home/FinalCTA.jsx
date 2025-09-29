@@ -7,21 +7,19 @@ export default function FinalCTA() {
       <h2 className="text-3xl md:text-3xl font-bold text-gray-800 mb-6">
         Explore all the features
       </h2>
-      <p className="text-gray-700 max-w-2xl mx-auto mb-8 text-base md:text-lg">
-        Try out everything the dashboard has to offer — from simple random number generation to real-time visualization. 
-        Create a free account to unlock personalized tools and exclusive features based on your generation history.
-      </p>
-      
-      <div className="flex flex-row justify-center space-x-4">
-        <Link to="/dashboard" className="inline-block">
-          <button className="button2 w-40">Try Dashboard</button>
-        </Link>
+      <p className="text-gray-700 max-w-2xl mx-auto mb-8 text-base md:text-lg"> 
+        Explore and customize all the options the Visualizer has to offer, 
+        from observing the PRNG’s own optimization to listening to music generated directly from its numbers. 
+        If you prefer to see quick applications in potential real products, take a look at the Showcase and try out the different game-style demos.
 
-        <Tooltip text="Coming soon" from="down">
-          <Link to="" className="inline-block">
-            <button className="button2 w-40">Log In</button>
-          </Link>
-        </Tooltip>
+      </p>      
+      <div className="flex flex-row justify-center space-x-4">
+        <Link to="/generator" className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation">
+              Quick Generation
+        </Link>
+        <Link to="/showcase" className="button2 w-40 h-12 inline-flex items-center justify-center select-none touch-manipulation">
+              Explore Showcase
+        </Link>       
       </div>
     </section>
   );

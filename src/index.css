@@ -154,3 +154,98 @@ input[type="range"].thumb-max::-moz-range-thumb {
     background-color: #f9f9f9;
   }
 }
+
+/* Dona més pes a la classe de Tailwind */
+a.underline { text-decoration: underline !important; }
+
+/* --- Botó 3: ghost (sense fons ni vora) --- */
+.button3,
+button.button3 {
+  background: transparent !important;
+  border: none !important;
+  color: inherit;           /* hereta el color del text del context */
+  padding: 0.6em 1.2em;     /* opcional: canvia-ho o posa 0 per botons d'icona */
+  border-radius: 8px;       /* coherent amb la resta */
+  cursor: pointer;
+  box-shadow: none;
+}
+
+/* No canviïs el fons ni en hover ni en focus */
+.button3:hover,
+button.button3:hover {
+  background: transparent !important;
+  color: inherit;           /* o posa un color si vols feedback */
+}
+
+/* Accessibilitat: focus visible sense canviar fons */
+.button3:focus-visible,
+button.button3:focus-visible {
+  outline: 2px solid #374151;   /* gris fosc del teu tema */
+  outline-offset: 2px;
+}
+
+/* Estat desactivat */
+.button3:disabled,
+button.button3:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Variant per botó d'icona (sense padding i línia d'interlineat) */
+.button3--icon,
+button.button3--icon {
+  padding: 0;
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Botó 4: rodó, elevat, sense heretar el botó base --- */
+.button4,
+button.button4 {
+  --btn4-size: 80px;                 /* valor per defecte (el sobreescriurem en línia) */
+  width: var(--btn4-size);
+  height: var(--btn4-size);
+  border-radius: 9999px;             /* perfectament circular */
+  background: #111827;               /* gris fosc (tailwind slate-900) */
+  color: #e6f2f3;                    /* text clar */
+  border: 2px solid #0b1220;         /* vora fosca */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 0 0 0 rgba(255,255,255,.06);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+  user-select: none;
+}
+
+.button4:hover {
+  background: #0f172a;               /* una mica més clara */
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0,0,0,.28), inset 0 0 0 0 rgba(255,255,255,.08);
+}
+
+.button4:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(0,0,0,.22), inset 0 2px 8px rgba(255,255,255,.04);
+}
+
+.button4:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
+/* mode clar: lleuger ajust de colors */
+@media (prefers-color-scheme: light) {
+  .button4, button.button4 {
+    background: #111827;
+    color: #f3f4f6;
+  }
+}
+
+

@@ -1,0 +1,8 @@
+.scrollHidden {
+    scrollbar-width: none;              /* Firefox */
+  }
+  .scrollHidden::-webkit-scrollbar {
+    width: 0;
+    height: 0;                          /* Chrome/Edge/Safari/iOS */
+  }
+  

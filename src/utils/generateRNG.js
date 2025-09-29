@@ -1,93 +1,71 @@
 // utils/generateRNG.js
-import MersenneTwister from 'mersenne-twister';
-import seedrandom from 'seedrandom';
 import { loadPcgWasm } from '../rngLib/pcg32_wasm_loader';
 
-// Cache the WASM module so we don't reload it
 let pcgPromise = null;
 async function getPcg() {
   if (!pcgPromise) pcgPromise = loadPcgWasm();
   return pcgPromise;
 }
 
-/**
- * Generate values with the 3 RNGs and return all series + the selected one.
- * - RNG1 = PCG32 (WASM)
- * - RNG2 = MT19937 (mersenne-twister)
- * - RNG3 = seedrandom.xorwow
- *
- * @param {'RNG1'|'RNG2'|'RNG3'} rngModel  which series is considered "active" for visuals
- * @param {number} seed                    preferably uint32
- * @param {number} min
- * @param {number} max
- * @param {number} quantity
- * @param {boolean} useU32                 if true, use uint32 arithmetic (art mode)
- */
-export async function generateRandomValues(
-  rngModel = 'RNG1',
-  seed = Date.now(),
+function nextU32FromBetween(pcg) {
+  const hi = pcg.between(0, 0xFFFF) | 0; // 16 bits alts
+  const lo = pcg.between(0, 0xFFFF) | 0; // 16 bits baixos
+  return (((hi & 0xFFFF) << 16) | (lo & 0xFFFF)) >>> 0; // uint32
+}
+
+// Decideix seed (intern)
+function resolveSeed(seedMode = 'random', seedInput = '') {
+  if (seedMode === 'fixed') {
+    const n = Number.parseInt(String(seedInput), 10);
+    return (Number.isFinite(n) ? n : 0) >>> 0;
+  }
+  try {
+    return (crypto.getRandomValues(new Uint32Array(1))[0]) >>> 0;
+  } catch {
+    return ((Date.now() ^ (performance.now() * 1000) ^ (Math.random() * 1e9)) >>> 0);
+  }
+}
+
+/** API pública → retorna múltiples valors (inclusiu). */
+export async function pcgSeries(
+  quantity = 1000,
   min = 0,
   max = 100,
-  quantity = 1000,
+  seedMode = 'random',   // 'random' | 'fixed'
+  seedInput = '',        // si 'fixed', s'usarà aquest valor
   useU32 = false
 ) {
-  const seedU32 = seed >>> 0;
-
-  // Ensure min <= max (UI should already do this, but just in case)
-  if (min > max) [min, max] = [max, min];
-
-  // Engines
   const pcg = await getPcg();
-  pcg.setSeed(seedU32); // deterministic for the same seed (no setState(0)!)
 
-  const mt = new MersenneTwister(seedU32);
-  const srng = seedrandom.xorwow(String(seedU32));
+  // Normalitza el rang
+  if (min > max) { const t = min; min = max; max = t; }
 
-  // Buffers
-  const rng1 = []; // PCG32
-  const rng2 = []; // MT19937
-  const rng3 = []; // seedrandom.xorwow
+  const seed = resolveSeed(seedMode, seedInput);
+  pcg.setSeed(seed);
 
-  // Pre-casts
-  const minS = (min | 0);
-  const maxS = (max | 0);
-  const minU = (min >>> 0);
-  const maxU = (max >>> 0);
+  const values = new Array(quantity);
 
-  for (let i = 0; i < quantity; i++) {
-    // PCG: use dedicated uint32/int functions
-    const v1 = useU32
-      ? pcg.betweenU32(minU, maxU)
-      : pcg.between(minS, maxS);
-    rng1.push(v1);
-
-    // MT & xorwow: when useU32, compute with uint32 span without bitwise truncation
-    if (useU32) {
-      const spanU = (maxU - minU + 1); // <= 2^32, safe in JS Number (53-bit mantissa)
-      const v2 = Math.floor(mt.random() * spanU) + minU;
-      const v3 = Math.floor(srng() * spanU) + minU;
-      rng2.push(v2 >>> 0);
-      rng3.push(v3 >>> 0);
-    } else {
-      const spanS = (maxS - minS + 1);
-      const v2 = Math.floor(mt.random() * spanS) + minS;
-      const v3 = Math.floor(srng() * spanS) + minS;
-      rng2.push(v2 | 0);
-      rng3.push(v3 | 0);
+  if (useU32) {
+    // 🔁 sense betweenU32: fem servir 2×between(0..0xFFFF) per formar un uint32
+    const minU = min >>> 0;
+    const maxU = max >>> 0;
+    const spanU = ((maxU - minU + 1) >>> 0) || 0x100000000; // evita 0 si [0, 2^32-1]
+    for (let i = 0; i < quantity; i++) {
+      const u = nextU32FromBetween(pcg);           // 0..2^32-1
+      values[i] = ((u % spanU) + minU) >>> 0;      // mapeig inclusiu
+    }
+  } else {
+    const minS = min | 0, maxS = max | 0;
+    for (let i = 0; i < quantity; i++) {
+      values[i] = (pcg.between(minS, maxS) | 0);
     }
   }
 
-  const selected =
-    rngModel === 'RNG1' ? rng1 :
-    rngModel === 'RNG2' ? rng2 :
-    rng3;
+  return values;
+}
 
-  return {
-    rng1,
-    rng2,
-    rng3,
-    selected,
-    selectedKey: rngModel,
-    meta: { seed: seedU32, min, max, quantity, useU32 },
-  };
+/** API pública → un sol valor [min,max] (inclusiu). */
+export async function pcgBetween(min, max, seedMode = 'random', seedInput = '', useU32 = false) {
+  const arr = await pcgSeries(1, min, max, seedMode, seedInput, useU32);
+  return arr[0];
 }

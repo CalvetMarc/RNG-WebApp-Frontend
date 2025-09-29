@@ -1,4 +1,4 @@
-import { FaCheckCircle, FaCogs, FaSortNumericUp, FaLock } from 'react-icons/fa';
+import { FaCheckCircle, FaCogs, FaSortNumericUp, FaSlidersH } from 'react-icons/fa';
 
 export default function WhyTrust() {
   return (
@@ -6,7 +6,7 @@ export default function WhyTrust() {
       <div className="max-w-5xl mx-auto text-center mb-10">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Why use this PRNG?</h2>
         <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-12 text-justify">
-          Our PRNG is built on top of PCG32, a modern alternative to outdated algorithms like Mersenne Twister. Unlike local PRNGs, it offers statistically robust results, tested with BigCrush, and is designed for external use with full traceability. Every number you generate is recorded along with the RNG’s internal state — ensuring transparency and reproducibility. No need to host or maintain your own system — just plug in and start using it instantly.
+          Our PRNG is built on top of PCG32, a modern alternative to outdated algorithms such as Mersenne Twister. It has been designed for seamless integration as a library across different environments, offering both continuous number generation and full control over the seed when manual reproducibility is required. This flexibility makes it suitable for a wide range of use cases, from games and simulations to research and testing. Its statistical robustness has been validated by successfully passing the BigCrush test suite, ensuring high-quality randomness.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-16 mt-16 md:pl-12">
@@ -23,8 +23,8 @@ export default function WhyTrust() {
           <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-2 md:gap-4">
             <FaCogs className="text-blue-500 text-2xl md:self-center" />
             <div>
-              <h3 className="font-semibold text-gray-800">API-ready</h3>
-              <p className="text-gray-600 text-sm">Easy integration</p>
+              <h3 className="font-semibold text-gray-800">Easy integration</h3>
+              <p className="text-gray-600 text-sm">Lightweight library</p>
             </div>
           </div>
 
@@ -37,12 +37,12 @@ export default function WhyTrust() {
             </div>
           </div>
 
-          {/* Bloc 4 */}
+          {/* Bloc 4 (Flexibilitat) */}
           <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-2 md:gap-4">
-            <FaLock className="text-red-500 text-2xl md:self-center" />
+            <FaSlidersH className="text-orange-500 text-2xl md:self-center" />
             <div>
-              <h3 className="font-semibold text-gray-800">Abuse protection</h3>
-              <p className="text-gray-600 text-sm">Rate limits & fair usage</p>
+              <h3 className="font-semibold text-gray-800">Flexible usage</h3>
+              <p className="text-gray-600 text-sm">Seed control</p>
             </div>
           </div>
         </div>
