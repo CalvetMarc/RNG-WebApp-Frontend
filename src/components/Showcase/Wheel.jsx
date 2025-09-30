@@ -43,7 +43,7 @@ export default function Wheel({
   maxItems = 10,
   onEnd,
 }) {
-  const [items, setItems] = useState(["Option 1", "Option 2", "Option 3"]);
+  const [items, setItems] = useState(["Num 1", "Num 2", "Num 3"]);
   const [spinning, setSpinning] = useState(false);
   const [resultIdx, setResultIdx] = useState(0);
 
@@ -159,7 +159,7 @@ export default function Wheel({
 
   const addItem = () => {
     if (n >= maxItems) return;
-    setItems((prev) => [...prev, `Option ${prev.length + 1}`]);
+    setItems((prev) => [...prev, `Num ${prev.length + 1}`]);
   };
 
   const removeItem = (i) => {
@@ -333,7 +333,7 @@ export default function Wheel({
                        disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none
                        disabled:hover:bg-black"
           >
-            + Add
+            Add
           </button>
         </div>
 
