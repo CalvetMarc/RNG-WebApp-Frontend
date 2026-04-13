@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import InfoTooltip from '../../../../../components/Tooltip';
 
 export default function BETRImage({ values = [], grayscale = false, chainMode = false }) {
   const canvasRef = useRef(null);
@@ -71,8 +72,11 @@ export default function BETRImage({ values = [], grayscale = false, chainMode = 
           />
         </div>
 
-        <h2 className="text-center mt-4 text-base text-gray-800 font-medium pt-3 md:pt-0 pb-5 md:pb-0">
+        <h2 className="text-center mt-4 text-base text-gray-800 font-medium pt-3 md:pt-0 pb-5 md:pb-0 flex items-center justify-center gap-1.5">
           Bitwise Extraction to Color
+          <InfoTooltip text="Extracts RGB bytes directly from each generated number and renders them as pixels. Visible patterns in the image suggest the RNG has structural bias." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>

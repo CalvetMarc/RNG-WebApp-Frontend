@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import * as Tone from 'tone';
 import SingleSlider from '../../../UI/SingleSlider';
 import MelodyPartitura from './MelodyPartitura';
+import InfoTooltip from '../../../../components/Tooltip';
 
 // Detecta iOS (incloent iPadOS amb "MacIntel")
 function isIOS() {
@@ -250,6 +251,12 @@ export default function Melody({ values = [] }) {
       </div>
 
       <MelodyPartitura events={staffEvents} loopEnd={loopEndTime} />
+      <h2 className="text-center text-base text-gray-800 font-medium flex items-center justify-center gap-1.5 -mt-6 mb-4">
+        RNG Melody
+        <InfoTooltip text="Converts each value into a musical note on the C Major scale. Even numbers and odd numbers can have different durations, revealing rhythmic patterns in the sequence." from="up">
+          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+        </InfoTooltip>
+      </h2>
     </div>
   );
 }

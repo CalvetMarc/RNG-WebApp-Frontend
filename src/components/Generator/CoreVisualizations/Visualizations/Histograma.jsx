@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import InfoTooltip from '../../../../components/Tooltip';
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
@@ -57,14 +58,17 @@ export default function Histograma({ values = [] }) {
             <BarChart data={histogramData} margin={chartMargin}>
               <XAxis dataKey="value" />
               <YAxis />
-              <Tooltip content={<CustomTooltip />} />
+              <RechartsTooltip content={<CustomTooltip />} />
               <Bar dataKey="count" fill="#3DA9FC" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <h2 className="text-center mt-4 text-base text-gray-800 font-medium">
+        <h2 className="text-center mt-4 text-base text-gray-800 font-medium flex items-center justify-center gap-1.5">
           Value Distribution (Histogram)
+          <InfoTooltip text="Shows how often each generated value appears. A uniform distribution indicates good randomness." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>

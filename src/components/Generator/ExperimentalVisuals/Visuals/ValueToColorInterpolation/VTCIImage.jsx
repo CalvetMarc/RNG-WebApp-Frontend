@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import InfoTooltip from '../../../../../components/Tooltip';
 import {
   interpolateTurbo,
   interpolateSpectral,
@@ -166,8 +167,11 @@ export default function VTCIImage({
             style={{ imageRendering: 'pixelated' }}
           />
         </div>
-        <h2 className="text-center mt-4 text-base text-gray-800 font-medium pt-3 md:pt-0 pb-5 md:pb-0">
+        <h2 className="text-center mt-4 text-base text-gray-800 font-medium pt-3 md:pt-0 pb-5 md:pb-0 flex items-center justify-center gap-1.5">
           Value to Color Interpolation
+          <InfoTooltip text="Maps each value to a color using scientific color scales. Animate the offset to cycle through the palette and reveal hidden structures in the data." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>

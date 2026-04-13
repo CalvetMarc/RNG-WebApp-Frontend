@@ -55,7 +55,7 @@ export default function Tooltip({
       <div
         role="tooltip"
         className={[
-          "absolute z-50 whitespace-nowrap px-2 py-1 text-xs font-medium text-gray-300 bg-gray-800 rounded-md shadow",
+          "absolute z-50 px-3 py-2 text-xs font-medium text-gray-300 bg-gray-800 rounded-md shadow max-w-[260px] text-left",
           // Visibilitat: obert per estat (tap) o per hover/focus (desktop/teclat)
           open ? "opacity-100" : "opacity-0",
           "group-hover:opacity-100 group-focus-within:opacity-100",

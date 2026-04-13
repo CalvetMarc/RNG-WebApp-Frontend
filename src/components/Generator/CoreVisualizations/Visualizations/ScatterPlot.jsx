@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  ScatterChart, Scatter, XAxis, YAxis, Tooltip,
+  ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip,
   CartesianGrid, ResponsiveContainer
 } from 'recharts';
+import InfoTooltip from '../../../../components/Tooltip';
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
@@ -73,18 +74,21 @@ export default function RNGComparison({ values = [] }) {
               <CartesianGrid stroke="#717c8bff" strokeOpacity={0.8} strokeDasharray="3 3" />
               <XAxis dataKey="x" name="Current" type="number" domain={[min, max]} />
               <YAxis dataKey="y" name="Next" type="number" domain={[min, max]} />
-              <Tooltip content={<CustomTooltip />} />
+              <RechartsTooltip content={<CustomTooltip />} />
               <Scatter name="PCG Sequence" data={data} fill="#3DA9FC" />
             </ScatterChart>
           </ResponsiveContainer>
         </div>
 
         <h2
-          className={`text-center text-base text-gray-800 font-medium ${
+          className={`text-center text-base text-gray-800 font-medium flex items-center justify-center gap-1.5 ${
             isMobile ? 'mb-5' : 'mb-0'
           }`}
         >
-          Successive Number Correlation (Scatter Plot of Value Pairs)
+          Successive Number Correlation
+          <InfoTooltip text="Pairs each value with the next one (v[i] vs v[i+1]). A uniform scatter cloud means no correlation between consecutive outputs — a sign of good randomness." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import InfoTooltip from '../../../../components/Tooltip';
 
 export default function EntropyBlocks({ values = [], blockSize = 100 }) {
   const [entropies, setEntropies] = useState([]);
@@ -100,8 +101,11 @@ export default function EntropyBlocks({ values = [], blockSize = 100 }) {
           )}
         </div>
 
-        <h2 className="text-center mt-2 mb-0 md:mt-5 md:mb-3 text-base text-gray-800 font-medium translate-y-4">
+        <h2 className="text-center mt-2 mb-0 md:mt-5 md:mb-3 text-base text-gray-800 font-medium translate-y-4 flex items-center justify-center gap-1.5">
           Entropy per Block (H from 0 to {maxH.toFixed(2)})
+          <InfoTooltip text="Splits the sequence into blocks and measures Shannon entropy for each. Higher entropy (blue) means more randomness within that block; lower entropy (red) means more repetition." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>

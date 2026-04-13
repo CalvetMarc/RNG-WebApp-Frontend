@@ -4,9 +4,10 @@ import {
   Line,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
+import InfoTooltip from '../../../../components/Tooltip';
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
@@ -67,7 +68,7 @@ export default function SequenceGraph({ values = [] }) {
             <LineChart data={graphData} margin={chartMargin}>
               <XAxis dataKey="index" />
               <YAxis />
-              <Tooltip content={<CustomTooltip />} />
+              <RechartsTooltip content={<CustomTooltip />} />
               <Line
                 type="monotone"
                 dataKey="value"
@@ -79,8 +80,11 @@ export default function SequenceGraph({ values = [] }) {
           </ResponsiveContainer>
         </div>
 
-        <h2 className="text-center mt-4 text-base text-gray-800 font-medium">
+        <h2 className="text-center mt-4 text-base text-gray-800 font-medium flex items-center justify-center gap-1.5">
           Value Sequence Graph
+          <InfoTooltip text="Plots each generated value in order. Patterns or trends here suggest the RNG may not be truly random." from="up">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white text-[10px] font-bold cursor-help">i</span>
+          </InfoTooltip>
         </h2>
       </div>
     </div>
