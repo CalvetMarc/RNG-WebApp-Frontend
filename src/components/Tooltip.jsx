@@ -25,7 +25,7 @@ export default function Tooltip({
     setOpen(true);
     if (isMobile && rootRef.current) {
       const rect = rootRef.current.getBoundingClientRect();
-      setMobilePos(rect.top + window.scrollY - 8);
+      setMobilePos(rect.bottom + window.scrollY + 8);
     }
     if (autoCloseMs) {
       clearTimeout(timerRef.current);
@@ -76,7 +76,7 @@ export default function Tooltip({
         <div
           role="tooltip"
           className="absolute z-[9999] left-4 right-4 px-4 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg shadow-lg text-left pointer-events-none"
-          style={{ top: `${mobilePos}px`, transform: "translateY(-100%)" }}
+          style={{ top: `${mobilePos}px` }}
         >
           {text}
         </div>,
