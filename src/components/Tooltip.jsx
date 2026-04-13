@@ -16,12 +16,17 @@ export default function Tooltip({
   const cfg = map[from] ?? map.down;
 
   const [open, setOpen] = useState(false);
+  const [mobilePos, setMobilePos] = useState(null);
   const rootRef = useRef(null);
   const timerRef = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const onClickTrigger = () => {
     setOpen(true);
+    if (isMobile && rootRef.current) {
+      const rect = rootRef.current.getBoundingClientRect();
+      setMobilePos(rect.top + window.scrollY - 8);
+    }
     if (autoCloseMs) {
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setOpen(false), autoCloseMs);
@@ -66,12 +71,12 @@ export default function Tooltip({
         </div>
       )}
 
-      {/* Mobile: portal al body para evitar que transform rompa fixed */}
-      {isMobile && open && createPortal(
+      {/* Mobile: portal posicionado justo encima del componente */}
+      {isMobile && open && mobilePos != null && createPortal(
         <div
           role="tooltip"
-          className="fixed z-[9999] left-4 right-4 bottom-6 px-4 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg shadow-lg text-left pointer-events-none"
-          style={{ position: "fixed" }}
+          className="absolute z-[9999] left-4 right-4 px-4 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg shadow-lg text-left pointer-events-none"
+          style={{ top: `${mobilePos}px`, transform: "translateY(-100%)" }}
         >
           {text}
         </div>,
