@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export default function Tooltip({
   text,
@@ -38,8 +39,6 @@ export default function Tooltip({
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const isVisible = open;
-
   return (
     <div
       ref={rootRef}
@@ -67,14 +66,16 @@ export default function Tooltip({
         </div>
       )}
 
-      {/* Mobile: tooltip fijo centrado en pantalla */}
-      {isMobile && isVisible && (
+      {/* Mobile: portal al body para evitar que transform rompa fixed */}
+      {isMobile && open && createPortal(
         <div
           role="tooltip"
-          className="fixed z-50 left-4 right-4 bottom-6 px-4 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg shadow-lg text-left pointer-events-none animate-fade-in"
+          className="fixed z-[9999] left-4 right-4 bottom-6 px-4 py-3 text-sm font-medium text-gray-300 bg-gray-800 rounded-lg shadow-lg text-left pointer-events-none"
+          style={{ position: "fixed" }}
         >
           {text}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
