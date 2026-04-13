@@ -24,13 +24,16 @@ export default function RNGComparison({ values = [] }) {
       setData([]);
       return;
     }
-    const maxPoints = 10000;
-    const limit = Math.min(values.length - 1, maxPoints);
+    const maxPoints = 2000;
+    const total = values.length - 1;
+    const step = total > maxPoints ? total / maxPoints : 1;
+    const limit = Math.min(total, maxPoints);
     const pts = new Array(limit);
-    for (let i = 0; i < limit; i++) {
+    for (let j = 0; j < limit; j++) {
+      const i = Math.round(j * step);
       const x = values[i];
       const y = values[i + 1];
-      pts[i] = (typeof x === 'number' && typeof y === 'number') ? { x, y } : null;
+      pts[j] = (typeof x === 'number' && typeof y === 'number') ? { x, y } : null;
     }
     setData(pts.filter(Boolean));
   }, [values]);
@@ -45,8 +48,14 @@ export default function RNGComparison({ values = [] }) {
 
   // Domini segur per a eixos
   const hasVals = Array.isArray(values) && values.length > 0;
-  const min = hasVals ? Math.min(...values) : 0;
-  const max = hasVals ? Math.max(...values) : 1;
+  let min = 0, max = 1;
+  if (hasVals) {
+    min = values[0]; max = values[0];
+    for (let i = 1; i < values.length; i++) {
+      if (values[i] < min) min = values[i];
+      if (values[i] > max) max = values[i];
+    }
+  }
 
   const chartMargin = isMobile
     ? { top: 70, right: 5, left: 15, bottom: -10 }

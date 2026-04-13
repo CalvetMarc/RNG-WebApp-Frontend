@@ -23,13 +23,22 @@ export default function SequenceGraph({ values = [] }) {
   const [graphData, setGraphData] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Construeix les dades per al gràfic
+  // Construeix les dades per al gràfic (downsampled per rendiment)
   useEffect(() => {
-    const data = (Array.isArray(values) ? values : []).map((val, index) => ({
-      index,
-      value: typeof val === 'number' ? val : 0,
-    }));
-    setGraphData(data);
+    const arr = Array.isArray(values) ? values : [];
+    const maxPoints = 1000;
+    if (arr.length <= maxPoints) {
+      setGraphData(arr.map((val, index) => ({ index, value: typeof val === 'number' ? val : 0 })));
+    } else {
+      const step = arr.length / maxPoints;
+      const sampled = [];
+      for (let i = 0; i < maxPoints; i++) {
+        const idx = Math.round(i * step);
+        const val = arr[idx];
+        sampled.push({ index: idx, value: typeof val === 'number' ? val : 0 });
+      }
+      setGraphData(sampled);
+    }
   }, [values]);
 
   // Responsive check

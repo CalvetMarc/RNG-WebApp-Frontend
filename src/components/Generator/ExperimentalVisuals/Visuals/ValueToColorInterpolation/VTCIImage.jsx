@@ -23,15 +23,22 @@ export default function VTCIImage({
   // Animació (desplaça la intensitat si no és 'fixed')
   useEffect(() => {
     let speed = 0;
-    if (interpolationMode === 'mid') speed = 0.001;
-    else if (interpolationMode === 'fast') speed = 0.01;
+    if (interpolationMode === 'mid') speed = 0.002;
+    else if (interpolationMode === 'fast') speed = 0.02;
     if (speed === 0) return;
 
-    const interval = setInterval(() => {
-      setTimeOffset((prev) => (prev + speed) % 1);
-    }, 10);
+    let animId;
+    let last = performance.now();
+    const tick = (now) => {
+      if (now - last >= 50) {
+        last = now;
+        setTimeOffset((prev) => (prev + speed) % 1);
+      }
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
 
-    return () => clearInterval(interval);
+    return () => cancelAnimationFrame(animId);
   }, [interpolationMode]);
 
   useEffect(() => {
@@ -48,8 +55,11 @@ export default function VTCIImage({
 
     const imageData = ctx.createImageData(size, size);
 
-    const max = Math.max(...values);
-    const min = Math.min(...values);
+    let min = values[0], max = values[0];
+    for (let i = 1; i < total; i++) {
+      if (values[i] < min) min = values[i];
+      if (values[i] > max) max = values[i];
+    }
     const norm = (v) => (v - min) / (max - min || 1);
 
     const applyCurve = (x) => {
