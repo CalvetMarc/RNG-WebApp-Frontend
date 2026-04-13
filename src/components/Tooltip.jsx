@@ -17,6 +17,7 @@ export default function Tooltip({
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
+  const tooltipRef = useRef(null);
   const timerRef = useRef(null);
 
   // Obrir amb click/tap (mòbil)
@@ -38,6 +39,22 @@ export default function Tooltip({
     return () => document.removeEventListener("click", handleDocClick);
   }, []);
 
+  // Clamp tooltip dins del viewport
+  useEffect(() => {
+    if (!open || !tooltipRef.current) return;
+    const el = tooltipRef.current;
+    const rect = el.getBoundingClientRect();
+    const pad = 8;
+
+    if (rect.left < pad) {
+      el.style.transform = `translateX(${pad - rect.left}px)`;
+    } else if (rect.right > window.innerWidth - pad) {
+      el.style.transform = `translateX(${window.innerWidth - pad - rect.right}px)`;
+    } else {
+      el.style.transform = "";
+    }
+  }, [open]);
+
   // Neteja del timer
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
@@ -45,26 +62,25 @@ export default function Tooltip({
     <div
       ref={rootRef}
       className="relative inline-block group focus-within:outline-none"
-      onClick={onClickTrigger} // ← tap/click mostra el tooltip en mòbil
-      onMouseLeave={() => setOpen(false)} // per si cliques i mous el ratolí fora a desktop
+      onClick={onClickTrigger}
+      onMouseLeave={() => setOpen(false)}
     >
       {/* Trigger */}
       <div className="inline-flex items-center gap-1">{children}</div>
 
       {/* Tooltip box */}
       <div
+        ref={tooltipRef}
         role="tooltip"
         className={[
-          "absolute z-50 px-3 py-2 text-xs font-medium text-gray-300 bg-gray-800 rounded-md shadow min-w-[280px] max-w-[400px] w-max text-left",
+          "absolute z-50 px-3 py-2 text-xs font-medium text-gray-300 bg-gray-800 rounded-md shadow w-[min(400px,85vw)] text-left",
           // Visibilitat: obert per estat (tap) o per hover/focus (desktop/teclat)
           open ? "opacity-100" : "opacity-0",
           "group-hover:opacity-100 group-focus-within:opacity-100",
           // Animació slide suau
-          "transition duration-150 ease-out",
-          open ? cfg.enterTo : cfg.enter,
-          `group-hover:${cfg.enterTo} group-focus-within:${cfg.enterTo}`,
+          "transition-opacity duration-150 ease-out",
           // Posicionament
-          "pointer-events-none", // el tooltip no captura el pointer (evita parpelleig)
+          "pointer-events-none",
           cfg.boxPos,
         ].join(" ")}
       >
